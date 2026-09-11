@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Combatbullying | Área da equipe</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{--teal:#00685f;--dark:#075c56;--ink:#102b3b;--muted:#617580;--mint:#dff6f0;--paper:#f7fbfb;--line:#d9e9e6;--red:#b42318}
+    *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:14px "Plus Jakarta Sans",sans-serif}button,input{font:inherit}button{cursor:pointer;border:0}.hidden{display:none!important}
+    .shell{min-height:100vh;display:grid;grid-template-columns:minmax(340px,1fr) minmax(400px,560px)}.hero{padding:clamp(30px,8vw,110px);background:linear-gradient(145deg,#075e59,#0b8b7e);color:white;display:flex;flex-direction:column;justify-content:space-between}.brand{font-weight:800;font-size:19px}.mark{display:inline-grid;place-items:center;width:42px;height:42px;border-radius:14px;background:#b4f1e2;color:var(--dark);margin-right:9px}.hero h1{max-width:500px;font-size:clamp(34px,5vw,64px);line-height:1.03;letter-spacing:-.06em;margin:0 0 22px}.hero p{max-width:430px;color:#d6fff5;font-size:16px;line-height:1.8}.card{align-self:center;width:min(410px,calc(100% - 40px));margin:auto}.eyebrow{color:var(--teal);text-transform:uppercase;letter-spacing:.12em;font-size:11px;font-weight:800}h2{font-size:30px;letter-spacing:-.05em;margin:10px 0 8px}.sub{color:var(--muted);line-height:1.6;margin:0 0 28px}label{color:var(--ink);font-weight:700;font-size:12px;display:block;margin:17px 0 8px}input{width:100%;padding:14px 15px;border:1px solid var(--line);border-radius:12px;outline:0;background:white}input:focus{border-color:var(--teal);box-shadow:0 0 0 4px #d7f3ed}.primary{width:100%;margin-top:24px;padding:14px;border-radius:12px;background:var(--teal);color:white;font-weight:800}.hint,.notice{margin-top:18px;padding:12px 14px;border-radius:12px;background:#f0f7f5;color:var(--muted);font-size:12px;line-height:1.5}.error,.success{margin-top:16px;padding:12px 14px;border-radius:10px;font-size:12px}.error{background:#fff0ef;color:var(--red)}.success{background:#e9f8f1;color:#127050}
+    .dashboard{min-height:100vh;padding:clamp(24px,5vw,60px);max-width:1100px;margin:auto}.top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px}.top h1{font-size:38px;letter-spacing:-.06em;margin:8px 0}.status{padding:8px 12px;border-radius:999px;background:var(--mint);color:var(--dark);font-size:11px;font-weight:800}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.panel{background:white;border:1px solid var(--line);border-radius:18px;padding:20px;margin-top:16px}.stat strong{display:block;font-size:28px;margin:8px 0}.muted{color:var(--muted);font-size:12px}.bar{display:flex;justify-content:space-between;align-items:center}.logout{background:none;color:var(--red);font-weight:800}.tabs{display:flex;gap:8px;margin-bottom:16px}.tab{padding:10px 14px;border-radius:10px;background:#eef5f3;color:var(--muted);font-weight:700}.tab.active{background:var(--mint);color:var(--dark)}table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:12px 7px;border-bottom:1px solid #edf4f2;font-size:12px}th{color:var(--muted);font-size:10px;text-transform:uppercase}.badge{padding:5px 9px;border-radius:999px;background:var(--mint);color:var(--dark);font-size:10px;font-weight:700}.danger{background:none;color:var(--red);font-weight:700;font-size:11px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}.form-grid .full{grid-column:1/-1}.actions{display:flex;justify-content:flex-end}.actions .primary{width:auto;padding:12px 20px}
+    @media(max-width:760px){.shell{display:block}.hero{min-height:310px;padding:30px 24px}.hero h1{font-size:38px}.hero p{font-size:13px;line-height:1.5}.card{padding:40px 0}.grid{grid-template-columns:1fr}.top{display:block}.status{display:inline-block;margin-top:12px}.form-grid{display:block}}
+  </style>
+</head>
+<body>
+  <section id="login" class="shell"><div class="hero"><div class="brand"><span class="mark">◈</span>Combatbullying</div><div><h1>Uma escola mais segura começa pela escuta.</h1><p>Área protegida para equipes que acolhem relatos e acompanham cada ocorrência com responsabilidade.</p></div><small>● Ambiente local protegido · dados armazenados com segurança</small></div><div class="card"><div class="eyebrow">Área administrativa</div><h2>Boas-vindas</h2><p class="sub">Entre para acompanhar a comunidade e cuidar do que importa.</p><form id="login-form"><label>Usuário</label><input id="user" autocomplete="username" required><label>Senha</label><input id="password" type="password" autocomplete="current-password" required><button class="primary">Entrar com segurança</button></form><div id="login-message"></div><div class="hint"><b>Acesso inicial</b><br>Usuário: <b>admin</b> · Senha: <b>ademin</b><br>Altere a senha assim que entrar.</div></div></section>
+  <section id="dashboard" class="dashboard hidden"><div class="top"><div><div class="eyebrow">Painel protegido</div><h1>Visão geral</h1><p class="muted">Centro de cuidado da sua escola.</p></div><div><span class="status">● Sessão segura</span><button class="logout" id="logout">Sair</button></div></div><div class="tabs"><button class="tab active" data-tab="overview">Visão geral</button><button class="tab" data-tab="protocols">Protocolos</button><button class="tab" data-tab="users">Usuários</button><button class="tab" data-tab="password">Minha senha</button></div><div id="overview" class="tab-content"><div class="grid"><div class="panel stat"><span class="muted">USUÁRIOS ATIVOS</span><strong id="stat-users">—</strong><span class="muted">pessoas com acesso ao painel</span></div><div class="panel stat"><span class="muted">ACESSO</span><strong>Admin</strong><span class="muted">nível atual</span></div><div class="panel stat"><span class="muted">PROTEÇÃO</span><strong>Ativa</strong><span class="muted">sessão autenticada</span></div></div><div class="panel"><h3>Gestão segura</h3><p class="muted">Use as abas acima para gerenciar acessos e manter sua senha atualizada.</p></div></div>  <div id="protocols" class="tab-content hidden"><div class="panel"><div class="bar"><div><h3>Gestão de protocolos</h3><span class="muted">Receba, encaminhe e acompanhe cada reclamação.</span></div><button class="tab" id="refresh-protocols">Atualizar</button></div><div id="protocol-list"></div></div></div><div id="users" class="tab-content hidden"><div class="panel"><div class="bar"><h3>Equipe com acesso</h3><span id="count" class="badge">0 usuários</span></div><table><thead><tr><th>Nome</th><th>Usuário</th><th>Perfil</th><th>Entrada</th><th></th></tr></thead><tbody id="users-table"></tbody></table></div><div class="panel"><h3>Criar novo usuário</h3><form id="user-form" class="form-grid"><div><label>Nome completo</label><input id="new-name" required></div><div><label>Nome de usuário</label><input id="new-user" required></div><div><label>Senha inicial</label><input id="new-password" type="password" minlength="6" required></div><div class="actions"><button class="primary">Criar usuário</button></div></form><div id="user-message"></div></div></div><div id="password-tab" class="tab-content hidden"><div class="panel" style="max-width:560px"><h3>Alterar minha senha</h3><p class="muted">Use uma senha pessoal com pelo menos 6 caracteres.</p><form id="password-form"><label>Senha atual</label><input id="current" type="password" required><label>Nova senha</label><input id="new-own" type="password" minlength="6" required><label>Confirmar nova senha</label><input id="confirm" type="password" minlength="6" required><button class="primary">Salvar nova senha</button></form><div id="password-message"></div></div></div></section>
+  <style>
+    .protocol-card{border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:12px;background:#fbfefd}
+    .protocol-meta{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0;font-size:12px}
+    .protocol-meta b{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;margin-bottom:3px}
+    .protocol-card textarea{width:100%;min-height:85px;padding:10px;border:1px solid var(--line);border-radius:10px;resize:vertical;font:12px "Plus Jakarta Sans",sans-serif;color:var(--ink)}
+    .protocol-actions{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end}
+    .protocol-actions select{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:white;color:var(--ink)}
+    .protocol-actions button{padding:10px 14px;border-radius:10px;background:var(--teal);color:white;font-weight:700}
+    .attachments{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0}.attachments a{padding:6px 9px;border-radius:8px;background:var(--mint);color:var(--dark);font-size:11px;font-weight:700}
+    @media(max-width:700px){.protocol-meta{grid-template-columns:1fr 1fr}.protocol-actions{grid-template-columns:1fr}.protocol-actions button{width:100%}}
+  </style>
+  <script>
+    const $=id=>document.getElementById(id);async function api(path,options={}){const r=await fetch(path,{headers:{'Content-Type':'application/json'},...options});const d=await r.json();if(!r.ok)throw Error(d.error||'Não foi possível concluir.');return d}function msg(id,text,ok=false){$(id).innerHTML=text?`<div class="${ok?'success':'error'}">${text}</div>`:''}function escape(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}async function load(){try{const d=await api('/api/users');$('stat-users').textContent=d.users.filter(u=>u.active).length;$('count').textContent=d.users.length+' usuário'+(d.users.length===1?'':'s');$('users-table').innerHTML=d.users.map(u=>`<tr><td><b>${escape(u.display_name)}</b></td><td>@${escape(u.username)}</td><td><span class="badge">${u.role==='admin'?'Administrador':'Operador'}</span></td><td>${new Date(u.created_at).toLocaleDateString('pt-BR')}</td><td>${u.role!=='admin'?`<button class="danger" data-id="${u.id}">Remover</button>`:''}</td></tr>`).join('');document.querySelectorAll('[data-id]').forEach(b=>b.onclick=async()=>{if(confirm('Remover este usuário?')){await api('/api/users/'+b.dataset.id,{method:'DELETE'});load()}})}catch(e){if(e.message.includes('Acesso'))logout()}}function show(){ $('login').classList.add('hidden');$('dashboard').classList.remove('hidden');load()}function logout(){api('/api/logout',{method:'POST'}).finally(()=>location.reload())}$('login-form').onsubmit=async e=>{e.preventDefault();try{const d=await api('/api/login',{method:'POST',body:JSON.stringify({username:$('user').value,password:$('password').value})});show()}catch(e){msg('login-message',e.message)}};$('logout').onclick=logout;document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.tab-content').forEach(x=>x.classList.add('hidden'));$(b.dataset.tab==='password'?'password-tab':b.dataset.tab).classList.remove('hidden');if(b.dataset.tab==='users')load()});$('user-form').onsubmit=async e=>{e.preventDefault();try{await api('/api/users',{method:'POST',body:JSON.stringify({display_name:$('new-name').value,username:$('new-user').value,password:$('new-password').value})});e.target.reset();msg('user-message','Usuário criado com sucesso.',true);load()}catch(x){msg('user-message',x.message)}};$('password-form').onsubmit=async e=>{e.preventDefault();if($('new-own').value!==$('confirm').value){msg('password-message','As novas senhas não coincidem.');return}try{await api('/api/password',{method:'POST',body:JSON.stringify({current_password:$('current').value,new_password:$('new-own').value})});e.target.reset();msg('password-message','Senha alterada com sucesso.',true)}catch(x){msg('password-message',x.message)}};api('/api/me').then(d=>{if(d.user)show()})
+  </script>
+  <script>
+    async function loadProtocols() {
+      const list = document.getElementById('protocol-list');
+      try {
+        const [protocolData, teamData] = await Promise.all([api('/api/protocols'), api('/api/team')]);
+        const options = teamData.users.map(user => `<option value="${user.id}">${escape(user.display_name)} (@${escape(user.username)})</option>`).join('');
+        list.innerHTML = protocolData.protocols.length ? protocolData.protocols.map(protocol => `
+          <article class="protocol-card">
+            <div class="bar"><strong>${escape(protocol.protocol_code)}</strong><span class="badge">${escape(protocol.status)}</span></div>
+            <div class="protocol-meta">
+              <span><b>Tipo de agressão</b>${escape(protocol.aggression_type)}</span>
+              <span><b>Data e hora</b>${escape(protocol.occurred_date)} às ${escape(protocol.occurred_time)}</span>
+              <span><b>Denunciante</b>${protocol.privacy === 'anon' ? 'Anônimo' : escape(protocol.reporter_name || 'Identificado')}</span>
+              <span><b>Recebido em</b>${new Date(protocol.created_at).toLocaleString('pt-BR')}</span>
+            </div>
+            <p class="muted"><b>Relato:</b> ${escape(protocol.report)}</p>
+            ${protocol.attachments.length ? `<div class="attachments"><b class="muted">Anexos:</b>${protocol.attachments.map(file => `<a href="/api/protocols/${protocol.id}/attachments/${file.id}" target="_blank" rel="noopener">${escape(file.file_name)} (${(file.file_size/1024/1024).toFixed(2)} MB)</a>`).join('')}</div>` : ''}
+            <div class="protocol-actions">
+              <label>Status<select data-status="${protocol.id}">
+                ${['Recebida','Em triagem','Encaminhada','Em tratativa','Concluída'].map(status => `<option ${status === protocol.status ? 'selected' : ''}>${status}</option>`).join('')}
+              </select></label>
+              <label>Responsável<select data-assignee="${protocol.id}"><option value="">Não encaminhado</option>${options}</select></label>
+              <button data-save-protocol="${protocol.id}">Salvar encaminhamento</button>
+            </div>
+          </article>`).join('') : '<div class="notice">Nenhuma reclamação recebida ainda.</div>';
+        protocolData.protocols.forEach(protocol => {
+          const assignee = document.querySelector(`[data-assignee="${protocol.id}"]`);
+          if (assignee && protocol.assigned_to) assignee.value = protocol.assigned_to;
+        });
+        document.querySelectorAll('[data-save-protocol]').forEach(button => button.onclick = async () => {
+          const id = button.dataset.saveProtocol;
+          await api('/api/protocols/' + id, {method:'PATCH', body:JSON.stringify({
+            status: document.querySelector(`[data-status="${id}"]`).value,
+            assigned_to: document.querySelector(`[data-assignee="${id}"]`).value || null
+          })});
+          loadProtocols();
+        });
+      } catch (error) {
+        list.innerHTML = `<div class="error">${escape(error.message)}</div>`;
+      }
+    }
+    document.querySelector('[data-tab="protocols"]').addEventListener('click', loadProtocols);
+    document.getElementById('refresh-protocols').addEventListener('click', loadProtocols);
+  </script>
+</body></html>

@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;background-color:#f8f9ff;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "surface-container-high": "#dce9ff", "surface-container-highest": "#d5e3fc", "error": "#ba1a1a", "primary-container": "#008378", "outline-variant": "#bcc9c6", "primary-fixed": "#89f5e7", "inverse-on-surface": "#eaf1ff", "surface-tint": "#006a61", "surface-container": "#e6eeff", "primary-fixed-dim": "#6bd8cb", "secondary-container": "#6df5e1", "on-surface": "#0d1c2e", "on-error-container": "#93000a", "on-primary-container": "#f4fffc", "secondary-fixed": "#71f8e4", "primary": "#00685f", "surface-bright": "#f8f9ff", "on-primary-fixed-variant": "#005049", "outline": "#6d7a77", "on-secondary-fixed-variant": "#005048", "background": "#f8f9ff", "tertiary-fixed": "#ffddb8", "secondary": "#006b5f", "tertiary-container": "#a36700", "surface": "#f8f9ff", "inverse-surface": "#233144", "on-tertiary-container": "#fffbff", "surface-container-lowest": "#ffffff", "on-primary-fixed": "#00201d", "surface-variant": "#d5e3fc", "tertiary-fixed-dim": "#ffb95f", "on-tertiary": "#ffffff", "on-primary": "#ffffff", "on-secondary-fixed": "#00201c", "error-container": "#ffdad6", "on-error": "#ffffff", "on-secondary-container": "#006f64", "tertiary": "#825100", "on-surface-variant": "#3d4947", "secondary-fixed-dim": "#4fdbc8", "on-background": "#0d1c2e", "on-tertiary-fixed": "#2a1700", "on-tertiary-fixed-variant": "#653e00", "surface-container-low": "#eff4ff", "inverse-primary": "#6bd8cb", "on-secondary": "#ffffff", "surface-dim": "#ccdbf3" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "space-xs": "0.5rem", "space-sm": "0.75rem", "space-md": "1rem", "space-lg": "1.25rem", "space-3xl": "2.5rem", "space-2xs": "0.25rem", "screen-gutter": "1rem", "card-padding": "1.25rem", "space-xl": "1.5rem", "space-2xl": "2rem" }, "fontFamily": { "headline-lg": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"], "label-md": ["Plus Jakarta Sans"], "display-lg": ["Plus Jakarta Sans"], "headline-sm": ["Plus Jakarta Sans"], "caption": ["Plus Jakarta Sans"], "body-md": ["Plus Jakarta Sans"], "body-lg-medium": ["Plus Jakarta Sans"], "body-lg": ["Plus Jakarta Sans"], "label-sm": ["Plus Jakarta Sans"], "body-md-medium": ["Plus Jakarta Sans"] }, "fontSize": { "headline-lg": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.015em", "fontWeight": "700" }], "headline-md": ["22px", { "lineHeight": "30px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "600" }], "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "headline-sm": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.005em", "fontWeight": "600" }], "caption": ["11px", { "lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500" }], "body-md": ["14px", { "lineHeight": "22px", "letterSpacing": "0em", "fontWeight": "400" }], "body-lg-medium": ["16px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "500" }], "body-lg": ["16px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400" }], "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }], "body-md-medium": ["14px", { "lineHeight": "22px", "letterSpacing": "0em", "fontWeight": "500" }] } } } };</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-surface font-body-md text-body-md text-on-surface flex flex-col min-h-screen">
+<!-- Topbar com Identidade Combatbullying, Camuflar/SOS e Perfil -->
+<header class="fixed top-0 w-full z-50 pt-safe bg-surface/90 backdrop-blur-md border-b border-surface-container-high/60">
+<div class="h-14 px-screen-gutter flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">shield_with_heart</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-bold text-primary leading-tight">Combatbullying</span>
+<span class="font-caption text-caption text-on-surface-variant leading-none">Acompanhamento Seguro</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<!-- Botão Camuflar Rápido -->
+<button aria-label="Camuflar tela" class="flex items-center gap-1 bg-surface-container-high/60 hover:bg-surface-container-high text-on-surface-variant px-2.5 py-1 rounded-full text-caption font-semibold transition-all active:scale-95" id="quick-disguise-btn">
+<span class="material-symbols-outlined text-[15px]">calculate</span>
+<span>Camuflar</span>
+</button>
+<!-- SOS Discreto -->
+<button aria-label="S.O.S Emergência" class="h-7 px-2.5 rounded-full bg-error-container text-error flex items-center gap-1 font-label-sm text-label-sm font-bold active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[15px]">emergency</span>
+<span>S.O.S</span>
+</button>
+<!-- Perfil Anônimo -->
+<div class="w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[17px]">person</span>
+</div>
+</div>
+</div>
+</header>
+<!-- Conteúdo Principal -->
+<main class="flex flex-col w-full pt-16 pb-24 px-screen-gutter">
+<div class="flex flex-col gap-3 py-2">
+<!-- 1. Card de Protocolo Ativo Conciso -->
+<div class="bg-surface-container-lowest rounded-xl p-3.5 border border-surface-container shadow-sm flex flex-col gap-2.5">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[18px]">verified</span>
+<span class="font-caption text-caption uppercase tracking-wider text-outline font-bold">Protocolo</span>
+<span class="font-label-md text-label-md font-bold text-on-surface ml-0.5">#STN-2024-8942</span>
+</div>
+<button class="flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-low hover:bg-surface-container text-primary font-caption text-caption font-semibold transition-colors" id="copy-protocol-btn">
+<span class="material-symbols-outlined text-[14px]" id="copy-icon">content_copy</span>
+<span id="copy-text">Copiar</span>
+</button>
+</div>
+<div class="flex flex-wrap items-center gap-2 pt-0.5">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-secondary-container/40 text-primary font-label-sm text-label-sm font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+            Em Triagem Pedagógica
+          </span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-container-low text-on-surface-variant font-caption text-caption">
+<span class="material-symbols-outlined text-[13px] text-primary">lock</span>
+            Identidade Blindada • 100% Anônimo
+          </span>
+</div>
+</div>
+<!-- 2. Linha do Tempo Minimalista -->
+<div class="bg-surface-container-lowest rounded-xl p-3.5 border border-surface-container shadow-sm flex flex-col gap-3">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md font-bold text-on-surface">Progresso do Caso</span>
+<span class="font-caption text-caption text-on-surface-variant">Atualizado hoje às 10:42</span>
+</div>
+<div class="grid grid-cols-3 gap-2 relative">
+<!-- Etapa 1 -->
+<div class="flex flex-col items-center text-center gap-1.5">
+<div class="w-6 h-6 rounded-full bg-primary text-on-primary flex items-center justify-center z-10 shadow-sm">
+<span class="material-symbols-outlined text-[13px] font-bold">check</span>
+</div>
+<div class="flex flex-col">
+<span class="font-caption text-caption font-bold text-on-surface leading-tight">1. Relato Recebido</span>
+<span class="text-[10px] text-primary font-medium mt-0.5">Concluído</span>
+</div>
+</div>
+<!-- Linha conectora 1 -> 2 -->
+<div class="absolute left-[20%] right-[52%] top-3 h-0.5 bg-primary -z-0"></div>
+<!-- Etapa 2 -->
+<div class="flex flex-col items-center text-center gap-1.5">
+<div class="w-6 h-6 rounded-full bg-secondary text-on-secondary flex items-center justify-center z-10 ring-4 ring-secondary-container/40">
+<span class="material-symbols-outlined text-[13px]">pending</span>
+</div>
+<div class="flex flex-col">
+<span class="font-caption text-caption font-bold text-primary leading-tight">2. Triagem Ativa</span>
+<span class="text-[10px] text-tertiary-container font-semibold mt-0.5">Em andamento</span>
+</div>
+</div>
+<!-- Linha conectora 2 -> 3 -->
+<div class="absolute left-[52%] right-[20%] top-3 h-0.5 bg-surface-container-high -z-0"></div>
+<!-- Etapa 3 -->
+<div class="flex flex-col items-center text-center gap-1.5 opacity-60">
+<div class="w-6 h-6 rounded-full bg-surface-container-high text-outline flex items-center justify-center z-10">
+<span class="material-symbols-outlined text-[13px]">shield</span>
+</div>
+<div class="flex flex-col">
+<span class="font-caption text-caption font-medium text-on-surface leading-tight">3. Ações e Apoio</span>
+<span class="text-[10px] text-outline mt-0.5">A seguir</span>
+</div>
+</div>
+</div>
+</div>
+<!-- 3. Canal de Mensagens Sigilosas com a Equipe Escolar -->
+<div class="bg-surface-container-lowest rounded-xl border border-surface-container shadow-sm flex flex-col overflow-hidden">
+<!-- Cabeçalho do Chat -->
+<div class="px-3.5 py-2.5 bg-surface-container-low/70 border-b border-surface-container flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<div class="relative">
+<div class="w-8 h-8 rounded-full overflow-hidden ring-1 ring-primary/20 bg-surface-container">
+<img alt="Foto da Profa. Helena" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDkx-XTnuUktlu1Y3lmxY7UhvzTP1AdPUT48HFrqaDAa2vYbJitouqrOYztBffPu1ZF3cNwS8yVLnO-DFXWDcwJsdmg6PgZzcs7_LZjlbFGbYF3DGQCAQA2F5-uQNiWKUijfm5x-w1pcW7evf1qF5Cs3hY10_hJyHTRDfJOt7dIUDC3yfHYsZB72iVVBn7COw7wUlbwzS_3fFhibBMSIPi5WnsLcgay1bNaPiERTQzvTKUHbvK4rZtT8w"/>
+</div>
+<span class="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-primary ring-1 ring-white"></span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-1">
+<span class="font-label-sm text-label-sm font-bold text-on-surface">Profa. Helena</span>
+<span class="material-symbols-outlined text-primary text-[13px]">verified</span>
+</div>
+<span class="text-[11px] text-on-surface-variant leading-tight">Orientação Pedagógica</span>
+</div>
+</div>
+<span class="inline-flex items-center gap-1 font-caption text-caption text-primary bg-primary/10 px-2 py-0.5 rounded-full font-medium">
+<span class="material-symbols-outlined text-[12px]">lock</span>
+            Reservado
+          </span>
+</div>
+<!-- Conversação -->
+<div class="p-3.5 flex flex-col gap-3 bg-surface-bright" id="messages-container">
+<!-- Mensagem recebida da Profa. Helena -->
+<div class="flex items-end gap-2 max-w-[85%] self-start">
+<div class="w-6 h-6 rounded-full overflow-hidden shrink-0">
+<img alt="Helena" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDkx-XTnuUktlu1Y3lmxY7UhvzTP1AdPUT48HFrqaDAa2vYbJitouqrOYztBffPu1ZF3cNwS8yVLnO-DFXWDcwJsdmg6PgZzcs7_LZjlbFGbYF3DGQCAQA2F5-uQNiWKUijfm5x-w1pcW7evf1qF5Cs3hY10_hJyHTRDfJOt7dIUDC3yfHYsZB72iVVBn7COw7wUlbwzS_3fFhibBMSIPi5WnsLcgay1bNaPiERTQzvTKUHbvK4rZtT8w"/>
+</div>
+<div class="flex flex-col">
+<div class="bg-surface-container-low text-on-surface p-2.5 rounded-2xl rounded-bl-xs border border-surface-container/60 shadow-2xs">
+<p class="font-body-md text-[13px] leading-relaxed">Olá! Recebemos seu relato e já estamos acompanhando com total discrição e cuidado. Fique tranquilo(a).</p>
+</div>
+<span class="text-[10px] text-outline mt-1 ml-1">10:28</span>
+</div>
+</div>
+<!-- Mensagem enviada pelo Aluno -->
+<div class="flex flex-col items-end max-w-[80%] self-end">
+<div class="bg-primary text-on-primary p-2.5 rounded-2xl rounded-br-xs shadow-2xs">
+<p class="font-body-md text-[13px] leading-relaxed text-on-primary">Obrigado pelo retorno seguro.</p>
+</div>
+<div class="flex items-center gap-1 mt-1 mr-1">
+<span class="text-[10px] text-outline">10:35</span>
+<span class="material-symbols-outlined text-[12px] text-primary font-bold">done_all</span>
+</div>
+</div>
+<!-- Alerta de confirmação de nova mensagem enviada -->
+<div class="hidden self-center bg-secondary-container/40 text-on-secondary-container px-3 py-1 rounded-full text-caption font-semibold items-center gap-1.5 transition-all" id="reply-confirmation">
+<span class="material-symbols-outlined text-[14px] text-primary">check_circle</span>
+<span>Mensagem enviada em sigilo</span>
+</div>
+</div>
+<!-- Campo de Envio de Nova Mensagem Sigilosa -->
+<div class="p-2.5 bg-surface-container-lowest border-t border-surface-container flex items-center gap-1.5">
+<button aria-label="Anexar comprovante sigiloso" class="w-9 h-9 rounded-full text-outline hover:text-primary hover:bg-surface-container-low flex items-center justify-center shrink-0 transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]">attach_file</span>
+</button>
+<div class="flex-1 relative">
+<input class="w-full bg-surface-container-low text-on-surface placeholder:text-outline text-body-md px-3.5 py-2 rounded-full border border-transparent focus:border-primary/40 focus:bg-white focus:outline-none transition-all text-[13px]" id="anonymous-reply" placeholder="Escreva sua mensagem com calma..." type="text"/>
+</div>
+<button aria-label="Enviar mensagem" class="w-9 h-9 rounded-full bg-primary hover:bg-primary-container text-on-primary flex items-center justify-center shrink-0 shadow-sm transition-transform active:scale-95" id="send-reply-btn" type="button">
+<span class="material-symbols-outlined text-[18px]">send</span>
+</button>
+</div>
+</div>
+<!-- 4. Botão de Apoio Rápido Discreto no Rodapé -->
+<div class="bg-surface-container-low/70 rounded-xl px-3.5 py-2.5 flex items-center justify-between border border-surface-container/60">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded-full bg-error-container text-error flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[16px]">support_agent</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm font-semibold text-on-surface leading-tight">Precisa de ajuda imediata?</span>
+<span class="text-[11px] text-on-surface-variant leading-none">Ligue 188 - CVV (Gratuito e 24h)</span>
+</div>
+</div>
+<a class="bg-surface-container-lowest hover:bg-surface-container text-primary font-label-sm text-label-sm px-3 py-1 rounded-full font-bold border border-primary/20 shrink-0 transition-colors" href="tel:188">
+          Ligar 188
+        </a>
+</div>
+</div>
+</main>
+<!-- 5. Barra Inferior de Navegação Limpa -->
+<nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface/90 backdrop-blur-xl border-t border-surface-container-high/60">
+<div class="flex justify-around items-center h-14 px-screen-gutter">
+<a class="flex flex-col items-center justify-center gap-0.5 text-on-surface-variant hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">home</span>
+<span class="font-caption text-[11px] leading-tight">Início</span>
+</a>
+<a class="flex flex-col items-center justify-center gap-0.5 text-on-surface-variant hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">edit_document</span>
+<span class="font-caption text-[11px] leading-tight">Relatar</span>
+</a>
+<a aria-current="page" class="flex flex-col items-center justify-center gap-0.5 text-primary font-bold transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px] font-bold">verified</span>
+<span class="font-caption text-[11px] leading-tight">Protocolos</span>
+</a>
+<a class="flex flex-col items-center justify-center gap-0.5 text-on-surface-variant hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">menu_book</span>
+<span class="font-caption text-[11px] leading-tight">Guia</span>
+</a>
+</div>
+</nav>
+<script>
+    (function() {
+      // Copiar protocolo
+      const copyBtn = document.getElementById('copy-protocol-btn');
+      const copyText = document.getElementById('copy-text');
+      const copyIcon = document.getElementById('copy-icon');
+      const protocolNumber = '#STN-2024-8942';
+
+      if (copyBtn) {
+        copyBtn.addEventListener('click', function() {
+          navigator.clipboard.writeText(protocolNumber).then(function() {
+            copyText.textContent = 'Copiado!';
+            copyIcon.textContent = 'check';
+            setTimeout(function() {
+              copyText.textContent = 'Copiar';
+              copyIcon.textContent = 'content_copy';
+            }, 2500);
+          }).catch(function() {
+            copyText.textContent = 'Copiado!';
+          });
+        });
+      }
+
+      // Envio de réplica no chat
+      const replyInput = document.getElementById('anonymous-reply');
+      const sendBtn = document.getElementById('send-reply-btn');
+      const confirmation = document.getElementById('reply-confirmation');
+      const messagesContainer = document.getElementById('messages-container');
+
+      function sendMessage() {
+        if (replyInput && replyInput.value.trim().length > 0) {
+          const userMsg = replyInput.value.trim();
+          replyInput.value = '';
+
+          // Adiciona novo balão do aluno
+          const bubble = document.createElement('div');
+          bubble.className = 'flex flex-col items-end max-w-[80%] self-end animate-fadeIn';
+          bubble.innerHTML = `
+            <div class="bg-primary text-on-primary p-2.5 rounded-2xl rounded-br-xs shadow-2xs">
+              <p class="font-body-md text-[13px] leading-relaxed text-on-primary">${userMsg}</p>
+            </div>
+            <div class="flex items-center gap-1 mt-1 mr-1">
+              <span class="text-[10px] text-outline">Agora</span>
+              <span class="material-symbols-outlined text-[12px] text-primary font-bold">done</span>
+            </div>
+          `;
+          messagesContainer.insertBefore(bubble, confirmation);
+
+          confirmation.classList.remove('hidden');
+          confirmation.classList.add('flex');
+          setTimeout(function() {
+            confirmation.classList.add('hidden');
+            confirmation.classList.remove('flex');
+          }, 3500);
+        }
+      }
+
+      if (sendBtn) {
+        sendBtn.addEventListener('click', sendMessage);
+      }
+      if (replyInput) {
+        replyInput.addEventListener('keypress', function(e) {
+          if (e.key === 'Enter') {
+            sendMessage();
+          }
+        });
+      }
+
+      // Camuflar Rápido
+      const disguiseBtn = document.getElementById('quick-disguise-btn');
+      if (disguiseBtn) {
+        disguiseBtn.addEventListener('click', function() {
+          window.location.href = 'https://www.google.com/search?q=calculadora';
+        });
+      }
+    })();
+  </script>
+</body></html>

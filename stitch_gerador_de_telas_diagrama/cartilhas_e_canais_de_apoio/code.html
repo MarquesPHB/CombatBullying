@@ -1,0 +1,341 @@
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{width:100vw;margin:0;padding:0;background-color:#f8f9ff;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "surface-container-high": "#dce9ff", "surface-container-highest": "#d5e3fc", "error": "#ba1a1a", "primary-container": "#008378", "outline-variant": "#bcc9c6", "primary-fixed": "#89f5e7", "inverse-on-surface": "#eaf1ff", "surface-tint": "#006a61", "surface-container": "#e6eeff", "primary-fixed-dim": "#6bd8cb", "secondary-container": "#6df5e1", "on-surface": "#0d1c2e", "on-error-container": "#93000a", "on-primary-container": "#f4fffc", "secondary-fixed": "#71f8e4", "primary": "#00685f", "surface-bright": "#f8f9ff", "on-primary-fixed-variant": "#005049", "outline": "#6d7a77", "on-secondary-fixed-variant": "#005048", "background": "#f8f9ff", "tertiary-fixed": "#ffddb8", "secondary": "#006b5f", "tertiary-container": "#a36700", "surface": "#f8f9ff", "inverse-surface": "#233144", "on-tertiary-container": "#fffbff", "surface-container-lowest": "#ffffff", "on-primary-fixed": "#00201d", "surface-variant": "#d5e3fc", "tertiary-fixed-dim": "#ffb95f", "on-tertiary": "#ffffff", "on-primary": "#ffffff", "on-secondary-fixed": "#00201c", "error-container": "#ffdad6", "on-error": "#ffffff", "on-secondary-container": "#006f64", "tertiary": "#825100", "on-surface-variant": "#3d4947", "secondary-fixed-dim": "#4fdbc8", "on-background": "#0d1c2e", "on-tertiary-fixed": "#2a1700", "on-tertiary-fixed-variant": "#653e00", "surface-container-low": "#eff4ff", "inverse-primary": "#6bd8cb", "on-secondary": "#ffffff", "surface-dim": "#ccdbf3" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "space-xs": "0.5rem", "space-sm": "0.75rem", "space-md": "1rem", "space-lg": "1.25rem", "space-3xl": "2.5rem", "space-2xs": "0.25rem", "screen-gutter": "1rem", "card-padding": "1.25rem", "space-xl": "1.5rem", "space-2xl": "2rem" }, "fontFamily": { "headline-lg": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"], "label-md": ["Plus Jakarta Sans"], "display-lg": ["Plus Jakarta Sans"], "headline-sm": ["Plus Jakarta Sans"], "caption": ["Plus Jakarta Sans"], "body-md": ["Plus Jakarta Sans"], "body-lg-medium": ["Plus Jakarta Sans"], "body-lg": ["Plus Jakarta Sans"], "label-sm": ["Plus Jakarta Sans"], "body-md-medium": ["Plus Jakarta Sans"] }, "fontSize": { "headline-lg": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.015em", "fontWeight": "700" }], "headline-md": ["22px", { "lineHeight": "30px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "600" }], "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "headline-sm": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.005em", "fontWeight": "600" }], "caption": ["11px", { "lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500" }], "body-md": ["14px", { "lineHeight": "22px", "letterSpacing": "0em", "fontWeight": "400" }], "body-lg-medium": ["16px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "500" }], "body-lg": ["16px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400" }], "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }], "body-md-medium": ["14px", { "lineHeight": "22px", "letterSpacing": "0em", "fontWeight": "500" }] } } } };</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface font-body-md text-body-md text-on-surface flex flex-col min-h-screen"><header class="fixed top-0 w-full z-50 pt-safe bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 px-screen-gutter flex items-center justify-between"><div class="flex items-center gap-space-xs"><img alt="Sentinela Apoio Escolar Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA0XuzUFaVE0-hlHCmaGXel9v4pzKYpvW5ep5U3FUYhSaXywPejA_S1wYOiAiVTNzwZJLqWgOX_F15L0BVaZXILcnIqOghzsY8GBScrkTIbJJqIP76O30vbcd5XHECrmsrV5sCQAnqS2wyDAA380u7FyDiTI4iY-v8BjgOfz6xOmEFfffjOpW8r1Bw_aEEJ8PrDs65PSBRCKbBKmihxFP1hb0jsNVtvtoENZZo4fD3jKsfJ8NGesqWnqg"><div class="flex flex-col"><span class="font-label-sm text-label-sm font-bold text-primary tracking-tight">Combatbullying</span><span class="font-caption text-caption text-on-surface-variant leading-none">Guia &amp; Cartilhas</span></div></div><div class="flex items-center gap-space-xs"><button aria-label="S.O.S e Ajuda Imediata" class="min-h-[44px] min-w-[44px] px-space-xs py-1.5 rounded-full bg-error-container text-on-error-container flex items-center gap-1.5 transition-transform active:scale-95 shadow-[0_2px_8px_-2px_rgba(186,26,26,0.25)]"><span class="material-symbols-outlined text-[18px] text-error">emergency</span><span class="font-label-sm text-label-sm text-error font-bold whitespace-nowrap">S.O.S</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex flex-col relative w-full pt-16 pb-24 bg-surface min-h-screen"><div class="flex flex-col w-full px-screen-gutter space-y-space-md">
+<div class="flex items-center justify-between mt-space-sm">
+<div class="flex items-center gap-space-xs">
+<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container shadow-sm">
+<span class="material-symbols-outlined text-[18px]">auto_stories</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface leading-tight">Guias de Apoio</h2>
+<p class="font-caption text-caption text-on-surface-variant">Direitos, prevenção e autocuidado</p>
+</div>
+</div>
+<button class="min-h-[44px] px-space-xs py-1 rounded-full bg-surface-container-high text-on-surface-variant flex items-center gap-1.5 transition-transform active:scale-95 text-left" id="privacyMaskBtn">
+<span class="material-symbols-outlined text-[18px]">visibility_off</span>
+<span class="font-label-sm text-label-sm font-medium pr-1">Disfarce</span>
+</button>
+</div>
+<div class="relative w-full">
+<div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-primary">
+<span class="material-symbols-outlined text-[20px]">search</span>
+</div>
+<input class="w-full pl-10 pr-10 py-3 rounded-full bg-surface-container-lowest text-on-surface placeholder:text-outline font-body-md text-body-md shadow-sm transition-all focus:outline-none focus:bg-surface-container-low" id="guideSearchInput" placeholder="Pesquisar orientações, leis ou dicas de ajuda..." type="text">
+<button class="hidden absolute inset-y-0 right-0 pr-3.5 flex items-center text-on-surface-variant active:scale-90" id="clearSearchBtn">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<div class="w-full -mx-screen-gutter px-screen-gutter overflow-x-auto flex gap-space-xs no-scrollbar py-0.5" id="categoryContainer">
+<button class="cat-pill shrink-0 min-h-[44px] px-space-md rounded-full bg-primary text-on-primary font-label-md text-label-md flex items-center gap-1.5 shadow-sm transition-all" data-cat="all">
+<span class="material-symbols-outlined text-[16px]">apps</span>
+<span class="">Todos</span>
+</button>
+<button class="cat-pill shrink-0 min-h-[44px] px-space-md rounded-full bg-surface-container-lowest text-on-surface-variant font-label-md text-label-md flex items-center gap-1.5 shadow-sm transition-all" data-cat="bullying">
+<span class="material-symbols-outlined text-[16px]">groups</span>
+<span class="">Bullying</span>
+</button>
+<button class="cat-pill shrink-0 min-h-[44px] px-space-md rounded-full bg-surface-container-lowest text-on-surface-variant font-label-md text-label-md flex items-center gap-1.5 shadow-sm transition-all" data-cat="saude-mental">
+<span class="material-symbols-outlined text-[16px]">spa</span>
+<span class="">Saúde Mental</span>
+</button>
+<button class="cat-pill shrink-0 min-h-[44px] px-space-md rounded-full bg-surface-container-lowest text-on-surface-variant font-label-md text-label-md flex items-center gap-1.5 shadow-sm transition-all" data-cat="cyberbullying">
+<span class="material-symbols-outlined text-[16px]">phonelink_lock</span>
+<span class="">Cyberbullying</span>
+</button>
+<button class="cat-pill shrink-0 min-h-[44px] px-space-md rounded-full bg-surface-container-lowest text-on-surface-variant font-label-md text-label-md flex items-center gap-1.5 shadow-sm transition-all" data-cat="acolhimento">
+<span class="material-symbols-outlined text-[16px]">favorite</span>
+<span class="">Acolhimento</span>
+</button>
+</div>
+
+<div class="flex flex-col space-y-space-sm" id="guidesList">
+<article class="guide-card w-full rounded-2xl bg-surface-container-lowest p-space-md shadow-sm flex flex-col gap-space-xs transition-transform active:scale-[0.99] cursor-pointer" data-category="bullying">
+<div class="relative w-full h-36 rounded-xl overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Delicate soft editorial digital illustration of high school students talking gently in a sunny, comforting school library setting, warm calming mint teal, amber and soft blue tones, clean humanized minimal style conveying empathy and non-violence." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDGZrnTBWv6kNVf8DF5jqW1_e3ncj1NksXX6BisiU42hkld9BOGfbJwcfj3Cp2WvQHOJdXyP8R68I7pO5Y0zhFYkUPXGXn-GapX1YuPxJVOZoLuiWRz24IJvx5H4vO5Gla5X6pPcYmlDckoc9gDfnP-CNNY3HZIVPZrvhuqnZP8_orlPjpBG5_tVs4LUg2i2R8lm2HfyqIeMWrP1kJstaZp3xDd7aZ01pp3q4DrqWxWpeW2DLEA9KLyKw">
+<div class="absolute top-2 left-2 px-2.5 py-1 rounded-full bg-surface-container-lowest/90 backdrop-blur-md flex items-center gap-1 text-primary shadow-sm">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+<span class="font-caption text-caption font-semibold">3 min</span>
+</div>
+<div class="absolute top-2 right-2 px-2.5 py-1 rounded-full bg-primary-fixed text-on-primary-fixed font-caption text-caption font-bold">
+          Bullying
+        </div>
+</div>
+<div class="flex flex-col gap-0.5 pt-1">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Bullying vs Conflito: Reconhecendo agressões</h3>
+</div></article>
+<article class="guide-card w-full rounded-2xl bg-surface-container-lowest p-space-md shadow-sm flex flex-col gap-space-xs transition-transform active:scale-[0.99] cursor-pointer" data-category="cyberbullying">
+<div class="relative w-full h-36 rounded-xl overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Modern protective concept art showing a smartphone screen surrounded by gentle botanical mint shields and soft digital aura, reassuring atmosphere, safe data storage and cybersecurity for teenagers, soft teal and deep navy accents." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCaebZsdLvC-ohNtyE3-Z3ikFt-EBEw_-6Gj6Z4yRP6EbqrQXwPzez97UWiOu26-Rj98FhJ9IaXfucv69y5Quvfd6ioPny9orZaPo8D-dkC_7VzVVpikZxc9pYHBx0k9cqFGmGXhKG2SHXJ0KWZxIGnu4L058nSXJLwO-q7wJ4JTbS5fAOsYHTSTYTvOrFZXkOSJj_GTHZ2tqI7EtmhwxKeWtMjxfiHOdLAaa6mXXTDU5pputTvFBKgRg">
+<div class="absolute top-2 left-2 px-2.5 py-1 rounded-full bg-surface-container-lowest/90 backdrop-blur-md flex items-center gap-1 text-primary shadow-sm">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+<span class="font-caption text-caption font-semibold">4 min</span>
+</div>
+<div class="absolute top-2 right-2 px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface font-caption text-caption font-bold">
+          Cyberbullying
+        </div>
+</div>
+<div class="flex flex-col gap-0.5 pt-1">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Segurança Online: Guia prático de provas</h3>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2">Como salvar prints válidos com data e hora e acionar proteção institucional.</p>
+</div>
+<div class="flex items-center justify-between pt-1 text-primary font-label-md text-label-md">
+<span class="flex items-center gap-1">Ler cartilha <span class="material-symbols-outlined text-[16px]">arrow_forward</span></span>
+<button aria-label="Salvar cartilha" class="w-8 h-8 rounded-full bg-surface-container-low flex items-center justify-center text-on-surface-variant active:bg-secondary-container">
+<span class="material-symbols-outlined text-[18px]">bookmark_border</span>
+</button>
+</div>
+</article>
+<article class="guide-card w-full rounded-2xl bg-surface-container-lowest p-space-md shadow-sm flex flex-col gap-space-xs transition-transform active:scale-[0.99] cursor-pointer" data-category="acolhimento">
+<div class="relative w-full h-36 rounded-xl overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Poetic digital illustration of two empathetic young friends sitting side by side on a park bench under gentle soft afternoon sunlight, listening quietly and offering comfort, pastel teal, warm cream and warm amber palette, friendly atmosphere." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAmFBvTAjwBH5qr7kUcfOOfrP0kz8SV-pyPcJL2arsN6Tr3i91nA1UfOamxzN2E1gfWBROxppW80SO2_DPENWWMoa1Mhrwqn4cXodAPtQAsy4eKcAGAU4tVpklNiQ1_uXsBFrZHL96j03y9LxnA4rFtn3EJuAZkq3OcYjCMBosgTAFW78VQxHtFPFa8KVk2AafY5K2ulDJQVzXl4qvrsiLzPUjzOef9mjUPfXzueSLb0UIHvItpn0QSgA">
+<div class="absolute top-2 left-2 px-2.5 py-1 rounded-full bg-surface-container-lowest/90 backdrop-blur-md flex items-center gap-1 text-primary shadow-sm">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+<span class="font-caption text-caption font-semibold">2 min</span>
+</div>
+<div class="absolute top-2 right-2 px-2.5 py-1 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-caption text-caption font-bold">
+          Acolhimento
+        </div>
+</div>
+<div class="flex flex-col gap-0.5 pt-1">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Apoiar quem está sofrendo em silêncio</h3>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2">Aprenda a escutar sem julgar e agir como rede de apoio sem se expor.</p>
+</div>
+<div class="flex items-center justify-between pt-1 text-primary font-label-md text-label-md">
+<span class="flex items-center gap-1">Ler cartilha <span class="material-symbols-outlined text-[16px]">arrow_forward</span></span>
+<button aria-label="Salvar cartilha" class="w-8 h-8 rounded-full bg-surface-container-low flex items-center justify-center text-on-surface-variant active:bg-secondary-container">
+<span class="material-symbols-outlined text-[18px]">bookmark_border</span>
+</button>
+</div>
+</article>
+<article class="guide-card w-full rounded-2xl bg-surface-container-lowest p-space-md shadow-sm flex flex-col gap-space-xs transition-transform active:scale-[0.99] cursor-pointer" data-category="saude-mental">
+<div class="relative w-full h-36 rounded-xl overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Illustrative artistic depiction of open legal protection scales blended with green young plant leaves and soft light beams, symbol of juvenile law, safety, human rights and justice, rendered in clean contemporary teal, slate and light gold." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBX06GeHb76UF0T5QIpL1W67_HbIX4IKnslwrJYISJ9ZzLgfVbGi3rfUJkW8ObMrUmnwewzuC7FB9daBinuF2qW-eaTi45LHM8Pk565GsPXQGoS5kPTbHK8YJg9LMbbKR60BJS8XkhypSVE0C6y8ty-LT8pdEB6vbZp3Gt1m4KVhqlS38psPNoGoF-rZFQQgK7RQg1MJAhqzej6ht8StL7OvOAU_CJBZnmwqqmKzqTeCoDbwbqpEY8ybg">
+<div class="absolute top-2 left-2 px-2.5 py-1 rounded-full bg-surface-container-lowest/90 backdrop-blur-md flex items-center gap-1 text-primary shadow-sm">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+<span class="font-caption text-caption font-semibold">5 min</span>
+</div>
+<div class="absolute top-2 right-2 px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary-container font-caption text-caption font-bold">
+          Legislação &amp; ECA
+        </div>
+</div>
+<div class="flex flex-col gap-0.5 pt-1">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Seus Direitos e o Estatuto (ECA)</h3>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2">Principais garantias legais para convivência escolar segura e respeito à dignidade.</p>
+</div>
+<div class="flex items-center justify-between pt-1 text-primary font-label-md text-label-md">
+<span class="flex items-center gap-1">Ler cartilha <span class="material-symbols-outlined text-[16px]">arrow_forward</span></span>
+<button aria-label="Salvar cartilha" class="w-8 h-8 rounded-full bg-surface-container-low flex items-center justify-center text-on-surface-variant active:bg-secondary-container">
+<span class="material-symbols-outlined text-[18px]">bookmark_border</span>
+</button>
+</div>
+</article>
+</div>
+<div class="hidden flex-col items-center justify-center py-space-xl text-center" id="noResults">
+<div class="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center text-primary mb-space-xs">
+<span class="material-symbols-outlined text-[24px]">search_off</span>
+</div>
+<p class="font-headline-sm text-headline-sm text-on-surface">Nenhum conteúdo encontrado</p>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-xs mt-1">Tente palavras diferentes ou explore as categorias acima para encontrar acolhimento.</p>
+</div>
+<div class="pt-space-sm pb-space-lg">
+<button class="w-full min-h-[52px] rounded-full bg-primary text-on-primary font-headline-sm text-headline-sm font-semibold flex items-center justify-center gap-space-xs shadow-md active:scale-98 transition-transform" id="openHelplinesBtn">
+<span class="material-symbols-outlined text-[22px]">support_agent</span>
+<span class="">Canais Externos de Apoio Imediato</span>
+</button>
+<p class="text-center font-caption text-caption text-on-surface-variant mt-2 flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-primary">lock</span>
+      Linhas 100% gratuitas, anônimas e oficiais do Brasil
+    </p>
+</div>
+<div class="fixed inset-0 z-50 bg-inverse-surface/40 backdrop-blur-sm hidden flex-col justify-end transition-opacity" id="helplineBottomSheet">
+<div class="w-full bg-surface-container-lowest rounded-t-3xl p-screen-gutter shadow-2xl flex flex-col gap-space-md max-h-[751px] overflow-y-auto">
+<div class="w-12 h-1 bg-outline-variant rounded-full mx-auto -mt-1"></div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<div class="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center text-on-primary-fixed">
+<span class="material-symbols-outlined text-[18px]">verified_user</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Rede de Emergência e Direitos</h3>
+</div>
+<button class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface active:scale-95" id="closeHelplinesBtn">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<div class="flex flex-col gap-space-xs">
+<a class="flex items-center justify-between p-space-md rounded-2xl bg-surface-container-low transition-colors active:bg-surface-container" href="tel:100">
+<div class="flex items-center gap-space-sm">
+<div class="w-12 h-12 rounded-2xl bg-primary text-on-primary flex flex-col items-center justify-center shrink-0">
+<span class="font-label-sm text-label-sm font-bold leading-none">100</span>
+<span class="font-caption text-caption text-[9px] uppercase">Disque</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">Direitos Humanos</span>
+<span class="font-caption text-caption text-on-surface-variant">Denúncias de violência contra crianças e jovens</span>
+</div>
+</div>
+<div class="w-9 h-9 rounded-full bg-primary-fixed flex items-center justify-center text-on-primary-fixed shrink-0">
+<span class="material-symbols-outlined text-[18px]">call</span>
+</div>
+</a>
+<a class="flex items-center justify-between p-space-md rounded-2xl bg-surface-container-low transition-colors active:bg-surface-container" href="tel:188">
+<div class="flex items-center gap-space-sm">
+<div class="w-12 h-12 rounded-2xl bg-secondary text-on-secondary flex flex-col items-center justify-center shrink-0">
+<span class="font-label-sm text-label-sm font-bold leading-none">188</span>
+<span class="font-caption text-caption text-[9px] uppercase">CVV</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">Apoio Emocional (CVV)</span>
+<span class="font-caption text-caption text-on-surface-variant">Conversa amigável e acolhimento em crises 24h</span>
+</div>
+</div>
+<div class="w-9 h-9 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container shrink-0">
+<span class="material-symbols-outlined text-[18px]">call</span>
+</div>
+</a>
+<a class="flex items-center justify-between p-space-md rounded-2xl bg-surface-container-low transition-colors active:bg-surface-container" href="tel:125">
+<div class="flex items-center gap-space-sm">
+<div class="w-12 h-12 rounded-2xl bg-tertiary text-on-tertiary flex flex-col items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]">shield</span>
+<span class="font-caption text-caption text-[9px] uppercase">Local</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">Conselho Tutelar</span>
+<span class="font-caption text-caption text-on-surface-variant">Proteção e garantia de direitos no município</span>
+</div>
+</div>
+<div class="w-9 h-9 rounded-full bg-tertiary-fixed flex items-center justify-center text-on-tertiary-fixed shrink-0">
+<span class="material-symbols-outlined text-[18px]">call</span>
+</div>
+</a>
+</div>
+<div class="p-space-sm rounded-xl bg-surface-container text-on-surface-variant flex items-start gap-2">
+<span class="material-symbols-outlined text-[16px] text-primary shrink-0 mt-0.5">info</span>
+<p class="font-caption text-caption">As chamadas para o Disque 100 e CVV 188 não geram cobrança e não aparecem discriminadas em contas de telefone convencionais.</p>
+</div>
+</div>
+</div>
+<div class="fixed inset-0 z-50 bg-surface-container-lowest hidden flex-col items-center justify-center p-screen-gutter text-center" id="disguiseModal">
+<div class="w-16 h-16 rounded-2xl bg-surface-container flex items-center justify-center text-on-surface-variant mb-space-md">
+<span class="material-symbols-outlined text-[36px]">calculate</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-space-2xs">Calculadora de Estudos</h3>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-xs mb-space-lg">Modo de privacidade ativado. A tela simula anotações e fórmulas escolares comuns.</p>
+
+<button class="min-h-[48px] px-space-xl rounded-full bg-primary text-on-primary font-label-md text-label-md font-semibold active:scale-95 shadow-md" id="exitDisguiseBtn">
+      Restaurar Sentinela
+    </button>
+</div>
+</div>
+<script>
+  (function() {
+    const searchInput = document.getElementById('guideSearchInput');
+    const clearBtn = document.getElementById('clearSearchBtn');
+    const cards = Array.from(document.querySelectorAll('.guide-card'));
+    const categoryBtns = Array.from(document.querySelectorAll('.cat-pill'));
+    const noResults = document.getElementById('noResults');
+    let activeCategory = 'all';
+
+    function filterGuides() {
+      const term = searchInput.value.toLowerCase().trim();
+      let visibleCount = 0;
+
+      cards.forEach(card => {
+        const title = card.querySelector('h3').textContent.toLowerCase();
+        const desc = card.querySelector('p').textContent.toLowerCase();
+        const category = card.getAttribute('data-category');
+
+        const matchesText = title.includes(term) || desc.includes(term);
+        const matchesCategory = (activeCategory === 'all') || (category === activeCategory);
+
+        if (matchesText && matchesCategory) {
+          card.classList.remove('hidden');
+          card.classList.add('flex');
+          visibleCount++;
+        } else {
+          card.classList.add('hidden');
+          card.classList.remove('flex');
+        }
+      });
+
+      if (visibleCount === 0) {
+        noResults.classList.remove('hidden');
+        noResults.classList.add('flex');
+      } else {
+        noResults.classList.add('hidden');
+        noResults.classList.remove('flex');
+      }
+
+      if (term.length > 0) {
+        clearBtn.classList.remove('hidden');
+      } else {
+        clearBtn.classList.add('hidden');
+      }
+    }
+
+    searchInput.addEventListener('input', filterGuides);
+
+    clearBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      filterGuides();
+      searchInput.focus();
+    });
+
+    categoryBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        categoryBtns.forEach(b => {
+          b.classList.remove('bg-primary', 'text-on-primary');
+          b.classList.add('bg-surface-container-lowest', 'text-on-surface-variant');
+        });
+
+        btn.classList.remove('bg-surface-container-lowest', 'text-on-surface-variant');
+        btn.classList.add('bg-primary', 'text-on-primary');
+
+        activeCategory = btn.getAttribute('data-cat');
+        filterGuides();
+      });
+    });
+
+    const openSheetBtn = document.getElementById('openHelplinesBtn');
+    const closeSheetBtn = document.getElementById('closeHelplinesBtn');
+    const bottomSheet = document.getElementById('helplineBottomSheet');
+
+    openSheetBtn.addEventListener('click', () => {
+      bottomSheet.classList.remove('hidden');
+      bottomSheet.classList.add('flex');
+    });
+
+    closeSheetBtn.addEventListener('click', () => {
+      bottomSheet.classList.add('hidden');
+      bottomSheet.classList.remove('flex');
+    });
+
+    bottomSheet.addEventListener('click', (e) => {
+      if (e.target === bottomSheet) {
+        bottomSheet.classList.add('hidden');
+        bottomSheet.classList.remove('flex');
+      }
+    });
+
+    const privacyBtn = document.getElementById('privacyMaskBtn');
+    const disguiseModal = document.getElementById('disguiseModal');
+    const exitDisguiseBtn = document.getElementById('exitDisguiseBtn');
+
+    privacyBtn.addEventListener('click', () => {
+      disguiseModal.classList.remove('hidden');
+      disguiseModal.classList.add('flex');
+    });
+
+    exitDisguiseBtn.addEventListener('click', () => {
+      disguiseModal.classList.add('hidden');
+      disguiseModal.classList.remove('flex');
+    });
+  })();
+</script></main><nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-2px_12px_rgba(0,0,0,0.05)]" data-active-classes="text-primary font-bold"><div class="flex justify-around items-center h-16 px-space-2xs"><a class="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] px-space-xs text-on-surface-variant hover:text-on-surface transition-colors" data-path="inicio-apoio" href="#"><span class="material-symbols-outlined text-[22px]">shield_with_heart</span><span class="font-caption text-caption text-center leading-none">Início</span></a><a class="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] px-space-xs text-on-surface-variant hover:text-on-surface transition-colors" data-path="fazer-relato" href="#"><span class="material-symbols-outlined text-[22px]">edit_document</span><span class="font-caption text-caption text-center leading-none">Relatar</span></a><a class="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] px-space-xs text-on-surface-variant hover:text-on-surface transition-colors" data-path="protocolos" href="#"><span class="material-symbols-outlined text-[22px]">verified</span><span class="font-caption text-caption text-center leading-none">Protocolos</span></a><a class="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] px-space-xs text-on-surface-variant hover:text-on-surface transition-colors" data-path="guia-cartilhas" href="#"><span class="material-symbols-outlined text-[22px]">menu_book</span><span class="font-caption text-caption text-center leading-none">Guia</span></a></div></nav>
+
+
+
+</body></html>

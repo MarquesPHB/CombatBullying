@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>Combatbullying - Registrar Relato Seguro</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#00685f",
+            "primary-container": "#008378",
+            "on-primary": "#ffffff",
+            "on-primary-container": "#f4fffc",
+            "primary-fixed-dim": "#6bd8cb",
+            "secondary": "#006b5f",
+            "secondary-container": "#e0f2ee",
+            "on-secondary-container": "#004d44",
+            "surface": "#f8f9ff",
+            "surface-container-lowest": "#ffffff",
+            "surface-container-low": "#f0f4fc",
+            "surface-container": "#e6eeff",
+            "on-surface": "#0d1c2e",
+            "on-surface-variant": "#4a5957",
+            "outline": "#7a8a87",
+            "outline-variant": "#d2dedb",
+            "error": "#ba1a1a",
+            "error-container": "#ffdad6",
+            "on-error-container": "#93000a"
+          },
+          borderRadius: {
+            "xl": "1rem",
+            "2xl": "1.25rem",
+            "full": "9999px"
+          },
+          fontFamily: {
+            sans: ["Plus Jakarta Sans", "sans-serif"]
+          }
+        }
+      }
+    };
+  </script>
+<style>
+    body {
+      -webkit-tap-highlight-color: transparent;
+      min-height: max(844px, 100dvh);
+    }
+    .pb-safe { padding-bottom: max(env(safe-area-inset-bottom, 0px), 16px); }
+    .pt-safe { padding-top: max(env(safe-area-inset-top, 0px), 12px); }
+  </style>
+</head>
+<body class="bg-[#f8f9fc] font-sans text-on-surface antialiased flex flex-col min-h-screen selection:bg-teal-100">
+<!-- Header Superior Limpo e Seguro -->
+<header class="fixed top-0 w-full z-40 pt-safe bg-[#f8f9fc]/90 backdrop-blur-md border-b border-outline-variant/30 transition-all">
+<div class="h-14 px-4 flex items-center justify-between max-w-lg mx-auto">
+<div class="flex items-center gap-2.5">
+<div class="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-sm ring-1 ring-primary/20">
+<span class="material-symbols-outlined text-[20px]">shield_person</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[15px] font-bold text-primary tracking-tight leading-none">Combatbullying</span>
+<span class="text-[11px] text-on-surface-variant font-medium mt-0.5">Canal Seguro &amp; Sigiloso</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button aria-label="Camuflar / S.O.S" class="h-8 px-2.5 rounded-full bg-red-50 text-error flex items-center gap-1 border border-red-100 hover:bg-red-100 active:scale-95 transition-all text-xs font-semibold" type="button">
+<span class="material-symbols-outlined text-[15px] fill-1">emergency</span>
+<span>S.O.S</span>
+</button>
+<button aria-label="Perfil do usuário" class="w-8 h-8 rounded-full bg-surface-container-low text-on-surface-variant flex items-center justify-center ring-1 ring-outline-variant/40 active:scale-95 transition-transform" type="button">
+<span class="material-symbols-outlined text-[18px]">person</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Conteúdo Principal do Formulário -->
+<main class="flex-1 w-full max-w-lg mx-auto pt-20 pb-28 px-4 flex flex-col space-y-4">
+<!-- Card de Boas-vindas / Acolhimento -->
+<div class="bg-gradient-to-br from-teal-50/80 to-white p-4 rounded-2xl border border-teal-100/60 shadow-[0_2px_8px_-2px_rgba(0,104,95,0.06)] flex items-start gap-3">
+<div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center shrink-0 shadow-sm mt-0.5">
+<span class="material-symbols-outlined text-[18px]">favorite</span>
+</div>
+<div>
+<h1 class="text-[17px] font-bold text-on-surface leading-snug">Você não está só</h1>
+<p class="text-[13px] text-on-surface-variant mt-0.5 leading-relaxed">
+          Relate com tranquilidade. Toda informação recebida é tratada com sigilo absoluto e cuidado humanizado.
+        </p>
+</div>
+</div>
+<!-- Seção 1: Privacidade e Identificação -->
+<section class="bg-surface-container-lowest p-4 rounded-2xl border border-outline-variant/40 shadow-sm space-y-3">
+<div class="flex items-center justify-between">
+<label class="text-[13px] font-bold text-on-surface flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[17px]">verified_user</span>
+          Como prefere se apresentar?
+        </label>
+</div>
+<!-- Seletor em formato de 2 botões elegantes -->
+<div class="grid grid-cols-2 gap-2" id="privacy-group">
+<button class="p-3 rounded-xl border-2 border-primary bg-primary/5 flex flex-col items-start transition-all active:scale-[0.98]" id="opt-anon" onclick="setPrivacy('anon')" type="button">
+<div class="flex items-center justify-between w-full">
+<span class="text-[13px] font-bold text-primary">Anônimo</span>
+<span class="material-symbols-outlined text-[18px] text-primary" id="icon-check-anon">check_circle</span>
+</div>
+<span class="text-[11px] text-teal-800/80 font-medium mt-0.5 leading-tight">Recomendado • Sem rastros</span>
+</button>
+<button class="p-3 rounded-xl border border-outline-variant/60 bg-surface-container-lowest text-on-surface-variant flex flex-col items-start transition-all active:scale-[0.98] hover:border-outline" id="opt-identified" onclick="setPrivacy('identified')" type="button">
+<div class="flex items-center justify-between w-full">
+<span class="text-[13px] font-semibold text-on-surface" id="label-identified">Identificado</span>
+<span class="material-symbols-outlined text-[18px] text-outline-variant hidden" id="icon-check-id">check_circle</span>
+</div>
+<span class="text-[11px] text-on-surface-variant mt-0.5 leading-tight">Para contato de retorno</span>
+</button>
+</div>
+<p class="text-[11.5px] text-on-surface-variant/90 leading-normal flex items-center gap-1.5 pt-0.5">
+<span class="material-symbols-outlined text-[14px] text-primary shrink-0">lock</span>
+<span>Garantia de proteção legal e sigilo profissional pedagógico.</span>
+</p>
+<!-- Papel no Acontecimento -->
+<div class="pt-2 border-t border-outline-variant/30 space-y-2">
+<span class="text-[12px] font-semibold text-on-surface-variant block">Seu papel no ocorrido:</span>
+<div class="grid grid-cols-2 gap-2" id="role-group">
+<button class="py-2.5 px-3 rounded-xl bg-primary text-white font-medium text-[13px] flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95" id="btn-victim" onclick="setRole('victim')" type="button">
+<span class="material-symbols-outlined text-[17px]">person</span>
+<span>Eu sou a vítima</span>
+</button>
+<button class="py-2.5 px-3 rounded-xl bg-surface-container-low text-on-surface font-medium text-[13px] flex items-center justify-center gap-1.5 transition-all border border-outline-variant/40 active:scale-95 hover:bg-surface-container" id="btn-witness" onclick="setRole('witness')" type="button">
+<span class="material-symbols-outlined text-[17px] text-on-surface-variant">visibility</span>
+<span>Sou testemunha</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Seção 2: Tipo de Ocorrência (Chips Modernos) -->
+<section class="bg-surface-container-lowest p-4 rounded-2xl border border-outline-variant/40 shadow-sm space-y-2.5">
+<label class="text-[13px] font-bold text-on-surface flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[17px]">label</span>
+        O que aconteceu? <span class="text-[11px] font-normal text-on-surface-variant">(Selecione o tipo)</span>
+</label>
+<div class="flex flex-wrap gap-2 pt-0.5" id="tags-container">
+<button class="tag-chip px-3 py-1.5 rounded-full text-[12px] font-medium transition-all bg-secondary-container text-on-secondary-container ring-1 ring-primary/20" onclick="toggleTag(this)" type="button">
+          Verbal / Apelidos
+        </button>
+<button class="tag-chip px-3 py-1.5 rounded-full text-[12px] font-medium transition-all bg-surface-container-low text-on-surface-variant hover:text-on-surface" onclick="toggleTag(this)" type="button">
+          Exclusão Social
+        </button>
+<button class="tag-chip px-3 py-1.5 rounded-full text-[12px] font-medium transition-all bg-surface-container-low text-on-surface-variant hover:text-on-surface" onclick="toggleTag(this)" type="button">
+          Virtual / Cyberbullying
+        </button>
+<button class="tag-chip px-3 py-1.5 rounded-full text-[12px] font-medium transition-all bg-surface-container-low text-on-surface-variant hover:text-on-surface" onclick="toggleTag(this)" type="button">
+          Agressão ou Ameaça
+        </button>
+<button class="tag-chip px-3 py-1.5 rounded-full text-[12px] font-medium transition-all bg-surface-container-low text-on-surface-variant hover:text-on-surface" onclick="toggleTag(this)" type="button">
+          Outro tipo
+        </button>
+</div>
+</section>
+<!-- Seção 3: Relato Detalhado e Convidativo -->
+<section class="bg-surface-container-lowest p-4 rounded-2xl border border-outline-variant/40 shadow-sm space-y-2">
+<div class="flex items-center justify-between">
+<label class="text-[13px] font-bold text-on-surface flex items-center gap-1.5" for="desc-field">
+<span class="material-symbols-outlined text-primary text-[17px]">edit_note</span>
+          Conte os detalhes
+        </label>
+<span class="text-[11px] text-on-surface-variant/80 font-medium" id="char-counter">0/1500</span>
+</div>
+<div class="relative">
+<textarea class="w-full bg-surface-container-low/70 text-on-surface placeholder:text-on-surface-variant/60 text-[13.5px] rounded-xl p-3 border border-outline-variant/40 focus:border-primary focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary outline-none transition-all resize-none" id="desc-field" oninput="updateCounter(this)" placeholder="Conte com calma o que aconteceu, quem estava envolvido ou como você se sentiu..." rows="4"></textarea>
+</div>
+<!-- Onde e Quando Compactos (Linha Única) -->
+<div class="grid grid-cols-2 gap-2 pt-1">
+<div>
+<label class="text-[11px] font-medium text-on-surface-variant block mb-1" for="local-input">Local ou Turma (opcional)</label>
+<div class="relative">
+<input class="w-full bg-surface-container-low/60 text-on-surface text-[12.5px] rounded-lg py-2 px-2.5 border border-outline-variant/40 focus:border-primary focus:bg-surface-container-lowest outline-none transition-all" id="local-input" placeholder="Ex: Sala 9, Recreio" type="text"/>
+</div>
+</div>
+<div>
+<label class="text-[11px] font-medium text-on-surface-variant block mb-1" for="date-input">Quando foi? (opcional)</label>
+<div class="relative">
+<input class="w-full bg-surface-container-low/60 text-on-surface text-[12.5px] rounded-lg py-2 px-2.5 border border-outline-variant/40 focus:border-primary focus:bg-surface-container-lowest outline-none transition-all" id="date-input" placeholder="Ex: Ontem no intervalo" type="text"/>
+</div>
+</div>
+</div>
+</section>
+<!-- Seção 4: Anexos Compactos (Fotos/Áudios) -->
+<section class="bg-surface-container-lowest p-3.5 rounded-2xl border border-outline-variant/40 shadow-sm">
+<div class="flex items-center justify-between mb-2">
+<span class="text-[12.5px] font-semibold text-on-surface flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[17px]">attach_file</span>
+          Evidências ou Prints <span class="text-[11px] font-normal text-on-surface-variant">(opcional)</span>
+</span>
+<span class="text-[11px] text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">shield</span> Sem EXIF
+        </span>
+</div>
+<button class="w-full py-3 px-3 rounded-xl border border-dashed border-primary/40 bg-teal-50/40 hover:bg-teal-50 text-primary flex items-center justify-center gap-2 transition-colors active:scale-[0.99]" type="button">
+<span class="material-symbols-outlined text-[19px]">add_photo_alternate</span>
+<span class="text-[12.5px] font-semibold">Toque para anexar prints, áudio ou fotos</span>
+</button>
+</section>
+<!-- Botão de Envio e Aviso de Confirmação -->
+<div class="pt-2 pb-2 space-y-2.5">
+<button class="w-full py-3.5 px-4 rounded-xl bg-primary hover:bg-[#005a4e] text-white font-bold text-[14.5px] shadow-[0_4px_16px_rgba(0,104,95,0.25)] flex items-center justify-center gap-2 transition-all active:scale-[0.98]" onclick="submitModal()" type="button">
+<span class="material-symbols-outlined text-[20px]">send</span>
+<span>Enviar Relato Seguro</span>
+</button>
+<p class="text-center text-[11.5px] text-on-surface-variant flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-[15px] text-teal-700">pin</span>
+<span>Você receberá um código de protocolo para acompanhar a resposta.</span>
+</p>
+</div>
+</main>
+<!-- Modal de Confirmação & Protocolo -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-200" id="confirmation-modal">
+<div class="bg-surface-container-lowest rounded-2xl p-5 max-w-xs w-full shadow-2xl space-y-4 text-center transform scale-95 transition-transform duration-200 border border-outline-variant/30" id="modal-box">
+<div class="w-12 h-12 rounded-full bg-teal-50 text-primary flex items-center justify-center mx-auto ring-8 ring-teal-50/50">
+<span class="material-symbols-outlined text-[26px]">task_alt</span>
+</div>
+<div class="space-y-1">
+<h3 class="text-[17px] font-bold text-on-surface">Relato Registrado!</h3>
+<p class="text-[12.5px] text-on-surface-variant leading-relaxed">
+          Seu relato está sob custódia segura. Guarde seu protocolo único:
+        </p>
+</div>
+<div class="bg-surface-container-low p-3 rounded-xl border border-outline-variant/40">
+<div class="text-[18px] font-bold text-primary tracking-widest font-mono">#REL-9482-B</div>
+<span class="text-[10px] font-semibold text-primary uppercase tracking-wider block mt-0.5">Salvo e Protegido</span>
+</div>
+<button class="w-full py-2.5 rounded-xl bg-primary text-white text-[13px] font-semibold active:scale-95 transition-transform" onclick="closeModal()" type="button">
+        Entendido
+      </button>
+</div>
+</div>
+<!-- Barra de Navegação Inferior Padrão (4 abas) -->
+<nav class="fixed bottom-0 w-full z-40 pb-safe bg-[#f8f9fc]/95 backdrop-blur-lg border-t border-outline-variant/30">
+<div class="max-w-lg mx-auto flex items-center justify-around h-14 px-2">
+<!-- Aba Início -->
+<a class="flex flex-col items-center justify-center flex-1 py-1 text-on-surface-variant hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined text-[21px]">shield_with_heart</span>
+<span class="text-[11px] font-medium mt-0.5">Início</span>
+</a>
+<!-- Aba Relatar (Ativa) -->
+<a class="flex flex-col items-center justify-center flex-1 py-1 text-primary font-bold transition-colors" href="#">
+<span class="material-symbols-outlined text-[21px] fill-1">edit_document</span>
+<span class="text-[11px] mt-0.5">Relatar</span>
+</a>
+<!-- Aba Protocolos -->
+<a class="flex flex-col items-center justify-center flex-1 py-1 text-on-surface-variant hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined text-[21px]">verified</span>
+<span class="text-[11px] font-medium mt-0.5">Protocolos</span>
+</a>
+<!-- Aba Guia -->
+<a class="flex flex-col items-center justify-center flex-1 py-1 text-on-surface-variant hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined text-[21px]">menu_book</span>
+<span class="text-[11px] font-medium mt-0.5">Guia</span>
+</a>
+</div>
+</nav>
+<script>
+    // Alternar modo de privacidade
+    function setPrivacy(type) {
+      const optAnon = document.getElementById('opt-anon');
+      const optIdentified = document.getElementById('opt-identified');
+      const iconAnon = document.getElementById('icon-check-anon');
+      const iconId = document.getElementById('icon-check-id');
+      const labelId = document.getElementById('label-identified');
+
+      if (type === 'anon') {
+        optAnon.className = 'p-3 rounded-xl border-2 border-primary bg-primary/5 flex flex-col items-start transition-all active:scale-[0.98]';
+        optIdentified.className = 'p-3 rounded-xl border border-outline-variant/60 bg-surface-container-lowest text-on-surface-variant flex flex-col items-start transition-all active:scale-[0.98] hover:border-outline';
+        iconAnon.classList.remove('hidden');
+        iconId.classList.add('hidden');
+        labelId.className = 'text-[13px] font-semibold text-on-surface';
+      } else {
+        optIdentified.className = 'p-3 rounded-xl border-2 border-primary bg-primary/5 flex flex-col items-start transition-all active:scale-[0.98]';
+        optAnon.className = 'p-3 rounded-xl border border-outline-variant/60 bg-surface-container-lowest text-on-surface-variant flex flex-col items-start transition-all active:scale-[0.98] hover:border-outline';
+        iconId.classList.remove('hidden');
+        iconId.className = 'material-symbols-outlined text-[18px] text-primary';
+        iconAnon.classList.add('hidden');
+        labelId.className = 'text-[13px] font-bold text-primary';
+      }
+    }
+
+    // Alternar papel: Vítima ou Testemunha
+    function setRole(role) {
+      const btnVictim = document.getElementById('btn-victim');
+      const btnWitness = document.getElementById('btn-witness');
+
+      if (role === 'victim') {
+        btnVictim.className = 'py-2.5 px-3 rounded-xl bg-primary text-white font-medium text-[13px] flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95';
+        btnWitness.className = 'py-2.5 px-3 rounded-xl bg-surface-container-low text-on-surface font-medium text-[13px] flex items-center justify-center gap-1.5 transition-all border border-outline-variant/40 active:scale-95 hover:bg-surface-container';
+      } else {
+        btnWitness.className = 'py-2.5 px-3 rounded-xl bg-primary text-white font-medium text-[13px] flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95';
+        btnVictim.className = 'py-2.5 px-3 rounded-xl bg-surface-container-low text-on-surface font-medium text-[13px] flex items-center justify-center gap-1.5 transition-all border border-outline-variant/40 active:scale-95 hover:bg-surface-container';
+      }
+    }
+
+    // Selecionar chips de categoria
+    function toggleTag(btn) {
+      const chips = document.querySelectorAll('.tag-chip');
+      chips.forEach(c => {
+        c.className = 'tag-chip px-3 py-1.5 rounded-full text-[12px] font-medium transition-all bg-surface-container-low text-on-surface-variant hover:text-on-surface';
+      });
+      btn.className = 'tag-chip px-3 py-1.5 rounded-full text-[12px] font-medium transition-all bg-secondary-container text-on-secondary-container ring-1 ring-primary/20';
+    }
+
+    // Contador de caracteres
+    function updateCounter(field) {
+      const counter = document.getElementById('char-counter');
+      counter.textContent = field.value.length + '/1500';
+    }
+
+    // Modal
+    function submitModal() {
+      const modal = document.getElementById('confirmation-modal');
+      const box = document.getElementById('modal-box');
+      modal.classList.remove('opacity-0', 'pointer-events-none');
+      box.classList.remove('scale-95');
+      box.classList.add('scale-100');
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('confirmation-modal');
+      const box = document.getElementById('modal-box');
+      modal.classList.add('opacity-0', 'pointer-events-none');
+      box.classList.remove('scale-100');
+      box.classList.add('scale-95');
+    }
+  </script>
+</body></html>
