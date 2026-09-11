@@ -2,4 +2,4 @@ __pycache__/
 *.py[cod]
 combatbullyin.db
 .env
-.vercel/
+.vercel
