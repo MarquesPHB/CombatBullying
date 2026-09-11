@@ -1,0 +1,8 @@
+{
+  "name": "Combatbullying",
+  "description": "Canal seguro e sigiloso de acolhimento escolar contra o bullying, com acompanhamento anônimo de protocolos e painel de gestão pedagógica.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
