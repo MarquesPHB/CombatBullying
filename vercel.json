@@ -1,7 +1,9 @@
 {
-  "buildCommand": null,
+  "buildCommand": "echo static",
   "outputDirectory": ".",
-  "rewrites": [
-    { "source": "/admin", "destination": "/admin.html" }
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/index.py" },
+    { "src": "/admin", "dest": "/admin.html" },
+    { "handle": "filesystem" }
   ]
 }

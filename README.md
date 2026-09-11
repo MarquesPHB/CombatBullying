@@ -26,6 +26,13 @@ SQLite e ficam disponíveis para a equipe após o login.
 
 Os relatos também aceitam anexos de áudio, vídeo, imagem, PDF e arquivos de texto. São aceitos
 até 8 arquivos por reclamação, com limite de 8 MB por arquivo e 20 MB no conjunto. Os arquivos
-ficam armazenados no SQLite e os downloads são protegidos por sessão autenticada da equipe.
+ficam armazenados no banco configurado (SQLite local ou PostgreSQL no Vercel) e os downloads são
+protegidos por sessão autenticada da equipe.
+
+## Deploy no Vercel
+
+O deploy serverless usa [`api/index.py`](./api/index.py) com Flask e PostgreSQL. Configure as
+variáveis `DATABASE_URL` (Neon PostgreSQL com `sslmode=require`) e `SESSION_SECRET` no projeto
+Vercel. O schema é criado automaticamente na primeira requisição.
 
 As senhas não são armazenadas em texto puro: são protegidas com PBKDF2-HMAC-SHA256 e salt individual. As sessões usam cookie HTTP-only e expiram após 8 horas.
