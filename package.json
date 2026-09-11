@@ -1,0 +1,7 @@
+{
+  "name": "combatbullying",
+  "private": true,
+  "scripts": {
+    "build": "node -e \"console.log('Static deployment: no build step required')\""
+  }
+}
