@@ -1,12 +1,133 @@
-import React, { useState } from 'react';
-import { BullyingCase } from '../types';
+import React, { FormEvent, useState } from 'react';
+import { upload } from '@vercel/blob/client';
+import { ReportSubmission } from '../lib/api';
 
 interface StudentReportViewProps {
-  onNewReport: (newCase: Omit<BullyingCase, 'id' | 'createdAtFormatted' | 'updatedAtFormatted' | 'timeAgo' | 'status' | 'statusLabel' | 'history' | 'messages'>) => string;
+  onNewReport: (report: ReportSubmission) => Promise<{ protocol: string; pin: string }>;
   onOpenDisguise: () => void;
   onOpenSos: () => void;
   onNavigateTab: (tab: 'inicio' | 'relatar' | 'protocolos' | 'guia') => void;
-  onOpenStaffView?: () => void;
+  onOpenStaffView: () => void;
+}
+
+const MAX_FILES = 8;
+const MAX_TOTAL_SIZE = 2_000_000_000;
+const FILE_LIMITS: Record<string, number> = {
+  'video/3gpp': 1_000_000_000,
+  'video/mp4': 1_000_000_000,
+  'video/mpeg': 1_000_000_000,
+  'video/quicktime': 1_000_000_000,
+  'video/webm': 1_000_000_000,
+  'video/x-matroska': 1_000_000_000,
+  'video/x-msvideo': 1_000_000_000,
+  'audio/3gpp': 100_000_000,
+  'audio/aac': 100_000_000,
+  'audio/flac': 100_000_000,
+  'audio/midi': 100_000_000,
+  'audio/mp4': 100_000_000,
+  'audio/mpeg': 100_000_000,
+  'audio/ogg': 100_000_000,
+  'audio/wav': 100_000_000,
+  'audio/webm': 100_000_000,
+  'audio/x-m4a': 100_000_000,
+  'audio/x-ms-wma': 100_000_000,
+  'audio/x-wav': 100_000_000,
+  'image/avif': 50_000_000,
+  'image/bmp': 50_000_000,
+  'image/gif': 50_000_000,
+  'image/heic': 50_000_000,
+  'image/heif': 50_000_000,
+  'image/jpeg': 50_000_000,
+  'image/png': 50_000_000,
+  'image/tiff': 50_000_000,
+  'image/webp': 50_000_000,
+  'application/msword': 25_000_000,
+  'application/pdf': 25_000_000,
+  'application/rtf': 25_000_000,
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 25_000_000,
+  'text/csv': 25_000_000,
+  'text/plain': 25_000_000,
+  'text/rtf': 25_000_000,
+};
+
+const categories = [
+  'Bullying',
+  'Agressão física',
+  'Ameaça',
+  'Cyberbullying',
+  'Agressão verbal / ofensas',
+  'Exclusão social / isolamento',
+  'Assédio ou discriminação',
+  'Outro',
+];
+
+async function validateFiles(files: File[]) {
+  if (files.length > MAX_FILES) throw new Error(`Selecione no máximo ${MAX_FILES} arquivos.`);
+  if (files.reduce((total, file) => total + file.size, 0) > MAX_TOTAL_SIZE) {
+    throw new Error('O conjunto de anexos pode ter no máximo 2 GB.');
+  }
+  for (const file of files) {
+    const maxSize = FILE_LIMITS[file.type];
+    if (!maxSize) {
+      throw new Error(`O formato de “${file.name}” não é aceito.`);
+    }
+    if (file.size < 1 || file.size > maxSize) {
+      throw new Error(`“${file.name}” excede o limite de ${(maxSize / 1_000_000).toLocaleString('pt-BR')} MB.`);
+    }
+    if (file.type.startsWith('video/')) {
+      await new Promise<void>((resolve, reject) => {
+        const video = document.createElement('video');
+        const url = URL.createObjectURL(file);
+        const timeout = window.setTimeout(() => finish(new Error(`Não foi possível verificar a duração de “${file.name}”.`)), 15_000);
+        const finish = (error?: Error) => {
+          window.clearTimeout(timeout);
+          URL.revokeObjectURL(url);
+          video.removeAttribute('src');
+          video.load();
+          if (error) reject(error);
+          else resolve();
+        };
+        video.preload = 'metadata';
+        video.onloadedmetadata = () => {
+          if (!Number.isFinite(video.duration) || video.duration <= 0) {
+            finish(new Error(`Não foi possível verificar a duração de “${file.name}”.`));
+          } else if (video.duration > 10 * 60) {
+            finish(new Error(`O vídeo “${file.name}” ultrapassa o limite de 10 minutos.`));
+          } else {
+            finish();
+          }
+        };
+        video.onerror = () => finish(new Error(`Não foi possível ler o vídeo “${file.name}”.`));
+        video.src = url;
+      });
+    }
+  }
+}
+
+async function uploadEvidence(
+  files: File[],
+  credentials: { code: string; pin: string },
+  onProgress: (message: string) => void,
+) {
+  const code = credentials.code.replace(/[^A-Za-z0-9_-]/g, '');
+  for (const [index, file] of files.entries()) {
+    const extension = file.name.includes('.')
+      ? `.${file.name.split('.').pop()?.replace(/[^A-Za-z0-9]/g, '').toLowerCase()}`
+      : '';
+    const pathname = `evidence/${code}/${crypto.randomUUID()}${extension}`;
+    onProgress(`Enviando anexo ${index + 1} de ${files.length}: ${file.name}`);
+    await upload(pathname, file, {
+      access: 'private',
+      handleUploadUrl: '/api/attachments/upload',
+      clientPayload: JSON.stringify({
+        code: credentials.code,
+        pin: credentials.pin,
+        file_name: file.name,
+        content_type: file.type,
+        file_size: file.size,
+      }),
+    });
+  }
 }
 
 export const StudentReportView: React.FC<StudentReportViewProps> = ({
@@ -18,462 +139,198 @@ export const StudentReportView: React.FC<StudentReportViewProps> = ({
 }) => {
   const [isAnonymous, setIsAnonymous] = useState(true);
   const [authorName, setAuthorName] = useState('');
-  const [role, setRole] = useState<'vitima' | 'testemunha'>('vitima');
-  const [category, setCategory] = useState<'verbal' | 'exclusao' | 'cyberbullying' | 'agressao' | 'outro'>('verbal');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [role, setRole] = useState<'victim' | 'witness'>('victim');
+  const [category, setCategory] = useState(categories[0]);
   const [details, setDetails] = useState('');
   const [location, setLocation] = useState('');
+  const [classSeries, setClassSeries] = useState('');
   const [dateOfIncident, setDateOfIncident] = useState('');
-  const [attachedFiles, setAttachedFiles] = useState<Array<{ name: string; size: string }>>([]);
+  const [timeOfIncident, setTimeOfIncident] = useState('');
+  const [files, setFiles] = useState<File[]>([]);
+  const [error, setError] = useState('');
+  const [uploadStatus, setUploadStatus] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [receipt, setReceipt] = useState<{ code: string; pin: string } | null>(null);
+  const [failedFiles, setFailedFiles] = useState<File[]>([]);
 
-  // Modal confirmation
-  const [createdProtocol, setCreatedProtocol] = useState<string | null>(null);
-
-  const categories = [
-    { id: 'verbal', label: 'Verbal / Apelidos' },
-    { id: 'exclusao', label: 'Exclusão Social' },
-    { id: 'cyberbullying', label: 'Virtual / Cyberbullying' },
-    { id: 'agressao', label: 'Agressão ou Ameaça' },
-    { id: 'outro', label: 'Outro tipo' },
-  ] as const;
-
-  const handleAttachMock = () => {
-    // Simulated upload of evidence without EXIF
-    const sampleFiles = [
-      { name: 'print_conversa_sigilosa.png', size: '1.2 MB' },
-      { name: 'gravacao_audio_intervalo.m4a', size: '0:35' },
-    ];
-    const pick = sampleFiles[attachedFiles.length % sampleFiles.length];
-    setAttachedFiles([...attachedFiles, pick]);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!details.trim()) {
-      alert('Por favor, descreva brevemente o que aconteceu no campo de detalhes.');
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!details.trim() || !dateOfIncident || !timeOfIncident) {
+      setError('Informe o relato, a data e a hora do ocorrido.');
       return;
     }
+    if (!isAnonymous && !email.trim() && !phone.trim()) {
+      setError('Informe e-mail ou telefone/WhatsApp para receber atualizações.');
+      return;
+    }
+    setIsSubmitting(true);
+    setError('');
+    try {
+      await validateFiles(files);
+      if (files.length) {
+        const status = await fetch('/api/attachments/status', { headers: { Accept: 'application/json' } });
+        if (!status.ok) {
+          const data = await status.json();
+          throw new Error(data.error || 'O armazenamento seguro de anexos não está disponível.');
+        }
+      }
+      const created = await onNewReport({
+        privacy: isAnonymous ? 'anon' : 'identified',
+        role,
+        aggression_type: category,
+        occurred_date: dateOfIncident,
+        occurred_time: timeOfIncident,
+        location: location.trim(),
+        class_series: classSeries.trim(),
+        report: details.trim(),
+        reporter_name: isAnonymous ? '' : authorName.trim(),
+        reporter_email: isAnonymous ? '' : email.trim(),
+        reporter_phone: isAnonymous ? '' : phone.trim(),
+      });
+      const savedReceipt = { code: created.protocol, pin: created.pin };
+      setReceipt(savedReceipt);
+      setFiles([]);
+      setUploadStatus('');
+      if (files.length) {
+        try {
+          await uploadEvidence(files, savedReceipt, setUploadStatus);
+          setUploadStatus('Todos os anexos foram enviados com segurança.');
+        } catch (uploadError) {
+          setFailedFiles(files);
+          setError(
+            uploadError instanceof Error
+              ? `O relato foi recebido, mas não foi possível enviar todos os anexos: ${uploadError.message}`
+              : 'O relato foi recebido, mas houve uma falha ao enviar os anexos.',
+          );
+        }
+      }
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : 'Não foi possível enviar o relato.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-    const catObj = categories.find((c) => c.id === category);
-
-    const generatedId = onNewReport({
-      title: `${catObj?.label || 'Ocorrência'} - ${location || 'Ambiente Escolar'}`,
-      category,
-      categoryLabel: catObj?.label || 'Geral',
-      summary: details.length > 80 ? details.slice(0, 80) + '...' : details,
-      details: details.trim(),
-      urgency: category === 'agressao' ? 'alta' : 'moderada',
-      role,
-      roleLabel: role === 'vitima' ? 'Eu sou a vítima' : 'Testemunha',
-      classOrGrade: location || 'Não especificada',
-      channel: category === 'cyberbullying' ? 'Digital (Redes/Apps)' : 'Presencial',
-      isAnonymous,
-      authorName: isAnonymous ? undefined : authorName || 'Aluno Identificado',
-      location,
-      dateOfIncident,
-      evidence: attachedFiles.map((f, i) => ({
-        id: `att-${Date.now()}-${i}`,
-        name: f.name,
-        size: `${f.size} • Metadados limpos`,
-        type: f.name.includes('.m4a') ? 'audio' : 'image',
-      })),
-    });
-
-    setCreatedProtocol(generatedId);
+  const retryEvidence = async () => {
+    if (!receipt || !failedFiles.length) return;
+    setIsSubmitting(true);
+    setError('');
+    try {
+      await uploadEvidence(failedFiles, receipt, setUploadStatus);
+      setFailedFiles([]);
+      setUploadStatus('Todos os anexos foram enviados com segurança.');
+    } catch (uploadError) {
+      setError(uploadError instanceof Error ? uploadError.message : 'Não foi possível enviar os anexos.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="bg-[#f8f9fc] font-sans text-[#0d1c2e] antialiased flex flex-col min-h-screen relative pb-20">
-      {/* Header Superior Limpo e Seguro */}
-      <header className="sticky top-0 w-full z-40 bg-[#f8f9fc]/90 backdrop-blur-md border-b border-[#bcc9c6]/30">
+      <header className="sticky top-0 w-full z-40 bg-[#f8f9fc]/95 backdrop-blur-md border-b border-[#bcc9c6]/30">
         <div className="h-14 px-4 flex items-center justify-between max-w-lg mx-auto">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-[#00685f]/10 flex items-center justify-center text-[#00685f] shadow-xs ring-1 ring-[#00685f]/20">
-              <span className="material-symbols-outlined text-[20px]">shield_person</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[15px] font-bold text-[#00685f] tracking-tight leading-none">Combatbullying</span>
-              <span className="text-[11px] text-[#4a5957] font-medium mt-0.5">Canal Seguro &amp; Sigiloso</span>
-            </div>
+          <div>
+            <strong className="text-[15px] text-[#00685f]">Combatbullying</strong>
+            <p className="text-[11px] text-[#4a5957]">Registro confidencial</p>
           </div>
-
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={onOpenDisguise}
-              className="h-8 px-2.5 rounded-full bg-[#dce9ff]/60 hover:bg-[#dce9ff] text-[#3d4947] flex items-center gap-1 active:scale-95 transition-all text-xs font-semibold"
-              title="Camuflar com Calculadora"
-            >
-              <span className="material-symbols-outlined text-[15px]">calculate</span>
-              <span className="hidden sm:inline">Camuflar</span>
+            <button type="button" aria-label="Abrir calculadora camuflada" onClick={onOpenDisguise} className="w-9 h-9 rounded-full bg-[#dce9ff] text-[#3d4947]">
+              <span className="material-symbols-outlined">visibility_off</span>
             </button>
-
-            <button
-              type="button"
-              onClick={onOpenSos}
-              aria-label="Camuflar / S.O.S"
-              className="h-8 px-2.5 rounded-full bg-red-50 text-[#ba1a1a] flex items-center gap-1 border border-red-100 hover:bg-red-100 active:scale-95 transition-all text-xs font-semibold cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-[15px] fill-1">emergency</span>
-              <span>S.O.S</span>
-            </button>
-
-            <button
-              type="button"
-              aria-label="Perfil do usuário"
-              className="w-8 h-8 rounded-full bg-[#f0f4fc] text-[#4a5957] flex items-center justify-center ring-1 ring-[#d2dedb]/40 active:scale-95 transition-transform"
-            >
-              <span className="material-symbols-outlined text-[18px]">person</span>
+            <button type="button" onClick={onOpenSos} className="px-3 py-2 rounded-full bg-red-50 text-[#ba1a1a] font-bold">S.O.S</button>
+            <button type="button" onClick={onOpenStaffView} className="w-9 h-9 rounded-full bg-[#eff4ff] text-[#00685f]" aria-label="Acesso da equipe">
+              <span className="material-symbols-outlined">person</span>
             </button>
           </div>
         </div>
       </header>
 
-      {/* Conteúdo Principal do Formulário */}
-      <main className="flex-1 w-full max-w-lg mx-auto pt-3 pb-24 px-4 flex flex-col space-y-4">
-        {/* Card de Boas-vindas / Acolhimento */}
-        <div className="bg-gradient-to-br from-teal-50/80 to-white p-4 rounded-2xl border border-teal-100/60 shadow-[0_2px_8px_-2px_rgba(0,104,95,0.06)] flex items-start gap-3">
-          <div className="w-8 h-8 rounded-full bg-[#00685f] text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5">
-            <span className="material-symbols-outlined text-[18px]">favorite</span>
-          </div>
-          <div>
-            <h1 className="text-[17px] font-bold text-[#0d1c2e] leading-snug">Você não está só</h1>
-            <p className="text-[13px] text-[#4a5957] mt-0.5 leading-relaxed">
-              Relate com tranquilidade. Toda informação recebida é tratada com sigilo absoluto e cuidado humanizado.
-            </p>
-          </div>
-        </div>
+      <main className="w-full max-w-lg mx-auto px-4 py-4 pb-24 space-y-4">
+        <section className="bg-white p-4 rounded-2xl border border-[#d2dedb]/50">
+          <h1 className="text-lg font-bold">Fale com tranquilidade</h1>
+          <p className="text-sm text-[#4a5957] mt-1">Descreva o ocorrido. A equipe autorizada poderá analisar o relato; evite incluir informações que não sejam necessárias.</p>
+        </section>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Seção 1: Privacidade e Identificação */}
-          <section className="bg-white p-4 rounded-2xl border border-[#d2dedb]/40 shadow-xs space-y-3">
-            <div className="flex items-center justify-between">
-              <label className="text-[13px] font-bold text-[#0d1c2e] flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[#00685f] text-[17px]">verified_user</span>
-                Como prefere se apresentar?
-              </label>
-            </div>
-
-            {/* Seletor em formato de 2 botões elegantes */}
-            <div className="grid grid-cols-2 gap-2" id="privacy-group">
-              <button
-                type="button"
-                onClick={() => setIsAnonymous(true)}
-                className={`p-3 rounded-xl flex flex-col items-start transition-all active:scale-[0.98] cursor-pointer text-left ${
-                  isAnonymous
-                    ? 'border-2 border-[#00685f] bg-[#00685f]/5'
-                    : 'border border-[#d2dedb]/60 bg-white text-[#4a5957] hover:border-[#7a8a87]'
-                }`}
-              >
-                <div className="flex items-center justify-between w-full">
-                  <span className={`text-[13px] font-bold ${isAnonymous ? 'text-[#00685f]' : 'text-[#0d1c2e]'}`}>
-                    Anônimo
-                  </span>
-                  {isAnonymous && (
-                    <span className="material-symbols-outlined text-[18px] text-[#00685f]">check_circle</span>
-                  )}
-                </div>
-                <span className="text-[11px] text-teal-800/80 font-medium mt-0.5 leading-tight">
-                  Recomendado • Sem rastros
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setIsAnonymous(false)}
-                className={`p-3 rounded-xl flex flex-col items-start transition-all active:scale-[0.98] cursor-pointer text-left ${
-                  !isAnonymous
-                    ? 'border-2 border-[#00685f] bg-[#00685f]/5'
-                    : 'border border-[#d2dedb]/60 bg-white text-[#4a5957] hover:border-[#7a8a87]'
-                }`}
-              >
-                <div className="flex items-center justify-between w-full">
-                  <span className={`text-[13px] font-semibold ${!isAnonymous ? 'text-[#00685f] font-bold' : 'text-[#0d1c2e]'}`}>
-                    Identificado
-                  </span>
-                  {!isAnonymous && (
-                    <span className="material-symbols-outlined text-[18px] text-[#00685f]">check_circle</span>
-                  )}
-                </div>
-                <span className="text-[11px] text-[#4a5957] mt-0.5 leading-tight">Para contato de retorno</span>
-              </button>
-            </div>
-
-            {!isAnonymous && (
-              <div className="pt-1">
-                <input
-                  type="text"
-                  value={authorName}
-                  onChange={(e) => setAuthorName(e.target.value)}
-                  placeholder="Seu nome completo e turma para contato..."
-                  className="w-full bg-[#f0f4fc] text-[#0d1c2e] text-[13px] rounded-lg p-2.5 border border-[#d2dedb]/60 focus:border-[#00685f] outline-none"
-                />
-              </div>
-            )}
-
-            <p className="text-[11.5px] text-[#4a5957]/90 leading-normal flex items-center gap-1.5 pt-0.5">
-              <span className="material-symbols-outlined text-[14px] text-[#00685f] shrink-0">lock</span>
-              <span>Garantia de proteção legal e sigilo profissional pedagógico.</span>
-            </p>
-
-            {/* Papel no Acontecimento */}
-            <div className="pt-2 border-t border-[#d2dedb]/30 space-y-2">
-              <span className="text-[12px] font-semibold text-[#4a5957] block">Seu papel no ocorrido:</span>
-              <div className="grid grid-cols-2 gap-2" id="role-group">
-                <button
-                  type="button"
-                  onClick={() => setRole('vitima')}
-                  className={`py-2.5 px-3 rounded-xl font-medium text-[13px] flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-95 cursor-pointer ${
-                    role === 'vitima'
-                      ? 'bg-[#00685f] text-white shadow-xs'
-                      : 'bg-[#f0f4fc] text-[#0d1c2e] border border-[#d2dedb]/40 hover:bg-[#e6eeff]'
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-[17px]">person</span>
-                  <span>Eu sou a vítima</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setRole('testemunha')}
-                  className={`py-2.5 px-3 rounded-xl font-medium text-[13px] flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer ${
-                    role === 'testemunha'
-                      ? 'bg-[#00685f] text-white shadow-xs'
-                      : 'bg-[#f0f4fc] text-[#0d1c2e] border border-[#d2dedb]/40 hover:bg-[#e6eeff]'
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-[17px] text-[#4a5957]">visibility</span>
-                  <span>Sou testemunha</span>
-                </button>
-              </div>
+        {receipt ? (
+          <section className="bg-white p-5 rounded-2xl border border-[#d2dedb]/50 space-y-3" aria-live="polite">
+            <h2 className="font-bold text-lg">Relato recebido</h2>
+            <p className="text-sm text-[#4a5957]">Guarde o protocolo e o PIN. Eles são necessários para acompanhar este relato. O PIN será exibido somente agora.</p>
+            <div className="bg-[#eff4ff] rounded-xl p-3"><b>Protocolo:</b> <code>{receipt.code}</code></div>
+            <div className="bg-[#eff4ff] rounded-xl p-3"><b>PIN:</b> <code>{receipt.pin}</code></div>
+            {uploadStatus && <p className="text-sm text-[#00685f]" role="status">{uploadStatus}</p>}
+            {error && <p className="text-sm text-red-700" role="alert">{error}</p>}
+            {failedFiles.length > 0 && <button type="button" disabled={isSubmitting} onClick={retryEvidence} className="w-full p-3 rounded-xl bg-[#00685f] text-white font-semibold disabled:opacity-50">Tentar enviar anexos novamente</button>}
+            <div className="grid grid-cols-2 gap-2">
+              <button type="button" onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(`Protocolo: ${receipt.code}\nPIN: ${receipt.pin}`);
+                  setUploadStatus('Protocolo e PIN copiados.');
+                } catch {
+                  setError('Não foi possível copiar. Anote os dados exibidos.');
+                }
+              }} className="p-3 rounded-xl bg-[#eff4ff] text-[#00685f] font-semibold">Copiar dados</button>
+              <button type="button" onClick={() => onNavigateTab('protocolos')} className="p-3 rounded-xl bg-[#00685f] text-white font-semibold">Acompanhar</button>
             </div>
           </section>
-
-          {/* Seção 2: Tipo de Ocorrência (Chips Modernos) */}
-          <section className="bg-white p-4 rounded-2xl border border-[#d2dedb]/40 shadow-xs space-y-2.5">
-            <label className="text-[13px] font-bold text-[#0d1c2e] flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[#00685f] text-[17px]">label</span>
-              O que aconteceu? <span className="text-[11px] font-normal text-[#4a5957]">(Selecione o tipo)</span>
-            </label>
-            <div className="flex flex-wrap gap-2 pt-0.5" id="tags-container">
-              {categories.map((cat) => {
-                const isSelected = category === cat.id;
-                return (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => setCategory(cat.id)}
-                    className={`px-3 py-1.5 rounded-full text-[12px] font-medium transition-all cursor-pointer ${
-                      isSelected
-                        ? 'bg-[#e0f2ee] text-[#004d44] ring-1 ring-[#00685f]/20 font-semibold'
-                        : 'bg-[#f0f4fc] text-[#4a5957] hover:text-[#0d1c2e]'
-                    }`}
-                  >
-                    {cat.label}
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-
-          {/* Seção 3: Relato Detalhado e Convidativo */}
-          <section className="bg-white p-4 rounded-2xl border border-[#d2dedb]/40 shadow-xs space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-[13px] font-bold text-[#0d1c2e] flex items-center gap-1.5" htmlFor="desc-field">
-                <span className="material-symbols-outlined text-[#00685f] text-[17px]">edit_note</span>
-                Conte os detalhes
-              </label>
-              <span className="text-[11px] text-[#4a5957]/80 font-medium" id="char-counter">
-                {details.length}/1500
-              </span>
-            </div>
-
-            <div className="relative">
-              <textarea
-                id="desc-field"
-                rows={4}
-                maxLength={1500}
-                value={details}
-                onChange={(e) => setDetails(e.target.value)}
-                placeholder="Conte com calma o que aconteceu, quem estava envolvido ou como você se sentiu..."
-                className="w-full bg-[#f0f4fc]/70 text-[#0d1c2e] placeholder:text-[#4a5957]/60 text-[13.5px] rounded-xl p-3 border border-[#d2dedb]/40 focus:border-[#00685f] focus:bg-white focus:ring-1 focus:ring-[#00685f] outline-none transition-all resize-none"
-              ></textarea>
-            </div>
-
-            {/* Onde e Quando Compactos (Linha Única) */}
-            <div className="grid grid-cols-2 gap-2 pt-1">
-              <div>
-                <label className="text-[11px] font-medium text-[#4a5957] block mb-1" htmlFor="local-input">
-                  Local ou Turma (opcional)
-                </label>
-                <div className="relative">
-                  <input
-                    id="local-input"
-                    type="text"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    placeholder="Ex: Sala 9, Recreio"
-                    className="w-full bg-[#f0f4fc]/60 text-[#0d1c2e] text-[12.5px] rounded-lg py-2 px-2.5 border border-[#d2dedb]/40 focus:border-[#00685f] focus:bg-white outline-none transition-all"
-                  />
-                </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <section className="bg-white p-4 rounded-2xl border border-[#d2dedb]/50 space-y-3">
+              <h2 className="font-bold">Como prefere se apresentar?</h2>
+              <div className="grid grid-cols-2 gap-2">
+                <button type="button" onClick={() => setIsAnonymous(true)} className={`p-3 rounded-xl border ${isAnonymous ? 'border-[#00685f] bg-teal-50' : 'border-slate-200'}`}>Anônimo</button>
+                <button type="button" onClick={() => setIsAnonymous(false)} className={`p-3 rounded-xl border ${!isAnonymous ? 'border-[#00685f] bg-teal-50' : 'border-slate-200'}`}>Identificado</button>
               </div>
-
-              <div>
-                <label className="text-[11px] font-medium text-[#4a5957] block mb-1" htmlFor="date-input">
-                  Quando foi? (opcional)
-                </label>
-                <div className="relative">
-                  <input
-                    id="date-input"
-                    type="text"
-                    value={dateOfIncident}
-                    onChange={(e) => setDateOfIncident(e.target.value)}
-                    placeholder="Ex: Ontem no intervalo"
-                    className="w-full bg-[#f0f4fc]/60 text-[#0d1c2e] text-[12.5px] rounded-lg py-2 px-2.5 border border-[#d2dedb]/40 focus:border-[#00685f] focus:bg-white outline-none transition-all"
-                  />
-                </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button type="button" onClick={() => setRole('victim')} className={`p-3 rounded-xl border ${role === 'victim' ? 'border-[#00685f] bg-teal-50' : 'border-slate-200'}`}>Eu sou a vítima</button>
+                <button type="button" onClick={() => setRole('witness')} className={`p-3 rounded-xl border ${role === 'witness' ? 'border-[#00685f] bg-teal-50' : 'border-slate-200'}`}>Sou testemunha</button>
               </div>
-            </div>
-          </section>
+              {!isAnonymous && <div className="space-y-2">
+                <input value={authorName} onChange={(event) => setAuthorName(event.target.value)} maxLength={160} placeholder="Nome (opcional)" className="w-full rounded-xl border border-slate-200 p-3" />
+                <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} maxLength={254} placeholder="E-mail para contato (opcional)" className="w-full rounded-xl border border-slate-200 p-3" />
+                <input type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} maxLength={30} placeholder="Telefone/WhatsApp (opcional)" className="w-full rounded-xl border border-slate-200 p-3" />
+                <p className="text-xs text-slate-600">Informe e-mail ou telefone/WhatsApp para que a equipe possa retornar.</p>
+              </div>}
+            </section>
 
-          {/* Seção 4: Anexos Compactos (Fotos/Áudios) */}
-          <section className="bg-white p-3.5 rounded-2xl border border-[#d2dedb]/40 shadow-xs">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[12.5px] font-semibold text-[#0d1c2e] flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[#00685f] text-[17px]">attach_file</span>
-                Evidências ou Prints <span className="text-[11px] font-normal text-[#4a5957]">(opcional)</span>
-              </span>
-              <span className="text-[11px] text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
-                <span className="material-symbols-outlined text-[13px]">shield</span> Sem EXIF
-              </span>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleAttachMock}
-              className="w-full py-3 px-3 rounded-xl border border-dashed border-[#00685f]/40 bg-teal-50/40 hover:bg-teal-50 text-[#00685f] flex items-center justify-center gap-2 transition-colors active:scale-[0.99] cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-[19px]">add_photo_alternate</span>
-              <span className="text-[12.5px] font-semibold">Toque para anexar prints, áudio ou fotos</span>
-            </button>
-
-            {attachedFiles.length > 0 && (
-              <div className="mt-2 space-y-1.5">
-                {attachedFiles.map((file, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center justify-between p-2 rounded-lg bg-[#f0f4fc] text-xs text-[#0d1c2e]"
-                  >
-                    <div className="flex items-center gap-2 truncate">
-                      <span className="material-symbols-outlined text-[16px] text-[#00685f]">check_circle</span>
-                      <span className="truncate">{file.name}</span>
-                    </div>
-                    <span className="text-[11px] text-gray-500">{file.size}</span>
-                  </div>
-                ))}
+            <section className="bg-white p-4 rounded-2xl border border-[#d2dedb]/50 space-y-3">
+              <label className="block font-bold" htmlFor="aggression-type">Tipo de agressão</label>
+              <select id="aggression-type" value={category} onChange={(event) => setCategory(event.target.value)} className="w-full rounded-xl border border-slate-200 p-3">
+                {categories.map((item) => <option key={item}>{item}</option>)}
+              </select>
+              <label className="block font-bold" htmlFor="report-location">Onde aconteceu?</label>
+              <input id="report-location" value={location} onChange={(event) => setLocation(event.target.value)} maxLength={255} placeholder="Local (opcional)" className="w-full rounded-xl border border-slate-200 p-3" />
+              <label className="block font-bold" htmlFor="report-class">Turma / série (opcional)</label>
+              <input id="report-class" value={classSeries} onChange={(event) => setClassSeries(event.target.value)} maxLength={80} placeholder="Ex.: 8º B" className="w-full rounded-xl border border-slate-200 p-3" />
+              <div className="grid grid-cols-2 gap-2">
+                <div><label className="block font-bold" htmlFor="occurred-date">Data</label><input id="occurred-date" type="date" value={dateOfIncident} onChange={(event) => setDateOfIncident(event.target.value)} required className="w-full rounded-xl border border-slate-200 p-3" /></div>
+                <div><label className="block font-bold" htmlFor="occurred-time">Hora (24 horas)</label><input id="occurred-time" type="time" value={timeOfIncident} onChange={(event) => setTimeOfIncident(event.target.value)} required className="w-full rounded-xl border border-slate-200 p-3" /></div>
               </div>
-            )}
-          </section>
+              <label className="block font-bold" htmlFor="report-details">Conte o que aconteceu</label>
+              <textarea id="report-details" value={details} onChange={(event) => setDetails(event.target.value)} required maxLength={5000} rows={6} placeholder="Descreva o ocorrido com suas palavras..." className="w-full rounded-xl border border-slate-200 p-3" />
+              <div className="flex justify-between text-xs text-slate-500"><span>Evite incluir dados pessoais de outras pessoas, se não forem necessários.</span><span>{details.length}/5000</span></div>
+            </section>
 
-          {/* Botão de Envio e Aviso de Confirmação */}
-          <div className="pt-1 pb-2 space-y-2.5">
-            <button
-              type="submit"
-              className="w-full py-3.5 px-4 rounded-xl bg-[#00685f] hover:bg-[#005a4e] text-white font-bold text-[14.5px] shadow-[0_4px_16px_rgba(0,104,95,0.25)] flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-[20px]">send</span>
-              <span>Enviar Relato Seguro</span>
-            </button>
+            <section className="bg-white p-4 rounded-2xl border border-[#d2dedb]/50">
+              <label className="block font-bold" htmlFor="report-files">Anexar evidências (opcional)</label>
+              <input id="report-files" type="file" multiple accept="audio/*,video/*,image/*,.pdf,.doc,.docx,.rtf,.txt,.csv" onChange={(event) => setFiles(Array.from(event.target.files ?? []))} className="w-full rounded-xl border border-slate-200 p-3" />
+              <ul className="mt-2 text-xs text-slate-600 space-y-1">{files.map((file) => <li key={`${file.name}-${file.size}`}>{file.name} · {(file.size / 1024 / 1024).toFixed(2)} MB</li>)}</ul>
+              <p className="text-xs text-slate-600 mt-2">Até 8 arquivos e 2 GB no total. Vídeos: até 10 minutos e 1 GB; áudios: 100 MB; imagens: 50 MB; documentos: 25 MB. Os arquivos originais não são comprimidos.</p>
+            </section>
 
-            <p className="text-center text-[11.5px] text-[#4a5957] flex items-center justify-center gap-1">
-              <span className="material-symbols-outlined text-[15px] text-teal-700">pin</span>
-              <span>Você receberá um código de protocolo para acompanhar a resposta.</span>
-            </p>
-          </div>
-        </form>
-
-        {onOpenStaffView && (
-          <div className="text-center pt-2">
-            <button
-              onClick={onOpenStaffView}
-              className="text-xs text-[#00685f] hover:underline font-semibold flex items-center justify-center gap-1 mx-auto py-1"
-            >
-              <span className="material-symbols-outlined text-[15px]">admin_panel_settings</span>
-              <span>Acessar Painel da Equipe Pedagógica (Tela 3)</span>
-            </button>
-          </div>
+            {error && <p className="bg-red-50 text-red-800 p-3 rounded-xl text-sm" role="alert">{error}</p>}
+            {uploadStatus && <p className="text-sm text-[#00685f]" role="status">{uploadStatus}</p>}
+            <button type="submit" disabled={isSubmitting} className="w-full p-3.5 rounded-xl bg-[#00685f] text-white font-bold disabled:opacity-50">{isSubmitting ? 'Enviando com segurança…' : 'Enviar relato com segurança'}</button>
+          </form>
         )}
+
+        <button type="button" onClick={onOpenStaffView} className="w-full text-sm text-[#00685f] font-semibold py-2">Acesso da equipe</button>
       </main>
 
-      {/* Modal de Confirmação & Protocolo (exatamente como em Image 7.png) */}
-      {createdProtocol && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-white rounded-2xl p-5 max-w-xs w-full shadow-2xl space-y-4 text-center border border-[#d2dedb]/30">
-            <div className="w-12 h-12 rounded-full bg-teal-50 text-[#00685f] flex items-center justify-center mx-auto ring-8 ring-teal-50/50">
-              <span className="material-symbols-outlined text-[26px]">task_alt</span>
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-[17px] font-bold text-[#0d1c2e]">Relato Registrado!</h3>
-              <p className="text-[12.5px] text-[#4a5957] leading-relaxed">
-                Seu relato está sob custódia segura. Guarde seu protocolo único:
-              </p>
-            </div>
-            <div className="bg-[#f0f4fc] p-3 rounded-xl border border-[#d2dedb]/40">
-              <div className="text-[18px] font-bold text-[#00685f] tracking-widest font-mono">
-                #{createdProtocol}
-              </div>
-              <span className="text-[10px] font-semibold text-[#00685f] uppercase tracking-wider block mt-0.5">
-                Salvo e Protegido
-              </span>
-            </div>
-            <button
-              onClick={() => {
-                setCreatedProtocol(null);
-                onNavigateTab('protocolos');
-              }}
-              className="w-full py-2.5 rounded-xl bg-[#00685f] text-white text-[13px] font-semibold active:scale-95 transition-transform cursor-pointer"
-            >
-              Acompanhar Protocolo
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Barra de Navegação Inferior Padrão (4 abas) */}
-      <nav className="fixed bottom-0 left-0 right-0 w-full z-40 bg-[#f8f9fc]/95 backdrop-blur-lg border-t border-[#bcc9c6]/30">
-        <div className="max-w-lg mx-auto flex items-center justify-around h-14 px-2">
-          <button
-            onClick={() => onNavigateTab('inicio')}
-            className="flex flex-col items-center justify-center flex-1 py-1 text-[#4a5957] hover:text-[#0d1c2e] transition-colors cursor-pointer"
-          >
-            <span className="material-symbols-outlined text-[21px]">shield_with_heart</span>
-            <span className="text-[11px] font-medium mt-0.5">Início</span>
-          </button>
-
-          <button
-            onClick={() => onNavigateTab('relatar')}
-            aria-current="page"
-            className="flex flex-col items-center justify-center flex-1 py-1 text-[#00685f] font-bold transition-colors cursor-pointer"
-          >
-            <span className="material-symbols-outlined text-[21px] fill-1">edit_document</span>
-            <span className="text-[11px] mt-0.5">Relatar</span>
-          </button>
-
-          <button
-            onClick={() => onNavigateTab('protocolos')}
-            className="flex flex-col items-center justify-center flex-1 py-1 text-[#4a5957] hover:text-[#0d1c2e] transition-colors cursor-pointer"
-          >
-            <span className="material-symbols-outlined text-[21px]">verified</span>
-            <span className="text-[11px] font-medium mt-0.5">Protocolos</span>
-          </button>
-
-          <button
-            onClick={() => onNavigateTab('guia')}
-            className="flex flex-col items-center justify-center flex-1 py-1 text-[#4a5957] hover:text-[#0d1c2e] transition-colors cursor-pointer"
-          >
-            <span className="material-symbols-outlined text-[21px]">menu_book</span>
-            <span className="text-[11px] font-medium mt-0.5">Guia</span>
-          </button>
-        </div>
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 border-t border-slate-200">
+        <div className="max-w-lg mx-auto flex h-14">{(['inicio', 'relatar', 'protocolos', 'guia'] as const).map((tab) => <button key={tab} type="button" onClick={() => onNavigateTab(tab)} className={`flex-1 text-xs font-semibold ${tab === 'relatar' ? 'text-[#00685f]' : 'text-slate-600'}`}>{tab === 'inicio' ? 'Início' : tab === 'relatar' ? 'Relatar' : tab === 'protocolos' ? 'Protocolos' : 'Guia'}</button>)}</div>
       </nav>
     </div>
   );

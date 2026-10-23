@@ -1,235 +1,168 @@
-import { useState } from 'react';
-import { BullyingCase, EvidenceItem, AppMode, ActiveTab } from './types';
-import { INITIAL_CASES } from './data/initialCases';
-import { StudentTrackingView } from './components/StudentTrackingView';
-import { StudentReportView } from './components/StudentReportView';
-import { SchoolStaffView } from './components/SchoolStaffView';
-import { StudentHomeView } from './components/StudentHomeView';
-import { StudentGuideView } from './components/StudentGuideView';
+import { FormEvent, useEffect, useState } from 'react';
 import { DisguiseCalculator } from './components/DisguiseCalculator';
+import { SchoolStaffView } from './components/SchoolStaffView';
 import { SosModal } from './components/SosModal';
-import { EvidenceModal } from './components/EvidenceModal';
-import { TopModeBar } from './components/TopModeBar';
+import { StudentGuideView } from './components/StudentGuideView';
+import { StudentHomeView } from './components/StudentHomeView';
+import { StudentReportView } from './components/StudentReportView';
+import { StudentTrackingView } from './components/StudentTrackingView';
+import { apiRequest, CurrentUser, ReportSubmission } from './lib/api';
+
+type ActiveTab = 'inicio' | 'relatar' | 'protocolos' | 'guia';
 
 export default function App() {
-  const [cases, setCases] = useState<BullyingCase[]>(INITIAL_CASES);
-  const [selectedCaseId, setSelectedCaseId] = useState<string>('STN-2024-8942');
-  const [appMode, setAppMode] = useState<AppMode>('student-tracking');
-  const [studentTab, setStudentTab] = useState<ActiveTab>('protocolos');
-  const [isDisguised, setIsDisguised] = useState<boolean>(false);
-  const [isSosOpen, setIsSosOpen] = useState<boolean>(false);
-  const [selectedEvidence, setSelectedEvidence] = useState<EvidenceItem | null>(null);
+  const [user, setUser] = useState<CurrentUser | null>(null);
+  const [tab, setTab] = useState<ActiveTab>('inicio');
+  const [isStaffLoginOpen, setIsStaffLoginOpen] = useState(false);
+  const [isDisguised, setIsDisguised] = useState(false);
+  const [isSosOpen, setIsSosOpen] = useState(false);
+  const [receipt, setReceipt] = useState<{ code: string; pin: string } | null>(null);
+  const [login, setLogin] = useState({ username: '', password: '' });
+  const [loginError, setLoginError] = useState('');
+  const [appError, setAppError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [loggingIn, setLoggingIn] = useState(false);
 
-  const currentCase = cases.find((c) => c.id === selectedCaseId) || cases[0];
+  useEffect(() => {
+    void apiRequest<{ user: CurrentUser | null }>('/api/me')
+      .then((result) => setUser(result.user))
+      .catch((error: unknown) => setAppError(error instanceof Error ? error.message : 'Não foi possível conectar ao servidor.'))
+      .finally(() => setLoading(false));
+  }, []);
 
-  // Send message from student
-  const handleStudentSendMessage = (caseId: string, text: string) => {
-    const newMsg = {
-      id: `msg-${Date.now()}`,
-      sender: 'student' as const,
-      text,
-      time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-      read: true,
-    };
-
-    setCases((prev) =>
-      prev.map((c) => (c.id === caseId ? { ...c, messages: [...c.messages, newMsg] } : c))
-    );
+  const navigateTab = (nextTab: ActiveTab) => {
+    setTab(nextTab);
+    setAppError('');
   };
 
-  // Send message from staff
-  const handleStaffSendMessage = (caseId: string, text: string) => {
-    const newMsg = {
-      id: `msg-${Date.now()}`,
-      sender: 'staff' as const,
-      text,
-      time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-      read: true,
-    };
-
-    setCases((prev) =>
-      prev.map((c) => (c.id === caseId ? { ...c, messages: [...c.messages, newMsg] } : c))
-    );
+  const handleReport = async (report: ReportSubmission) => {
+    const result = await apiRequest<{ protocol: string; pin: string }>('/api/protocols', {
+      method: 'POST',
+      body: JSON.stringify(report),
+    });
+    setReceipt({ code: result.protocol, pin: result.pin });
+    return result;
   };
 
-  // Update case status
-  const handleUpdateStatus = (caseId: string, newStatus: BullyingCase['status']) => {
-    const statusLabels: Record<BullyingCase['status'], string> = {
-      recebido: 'Relato Recebido',
-      triagem: 'Em Triagem Pedagógica',
-      acolhimento: 'Em Acolhimento',
-      concluido: 'Finalizado com Segurança',
-    };
-
-    setCases((prev) =>
-      prev.map((c) =>
-        c.id === caseId
-          ? {
-              ...c,
-              status: newStatus,
-              statusLabel: statusLabels[newStatus],
-              updatedAtFormatted: `Atualizado hoje às ${new Date().toLocaleTimeString('pt-BR', {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}`,
-            }
-          : c
-      )
-    );
-  };
-
-  // Add history entry
-  const handleAddHistoryNote = (caseId: string, note: string) => {
-    const newHist = {
-      id: `hist-${Date.now()}`,
-      title: 'Parecer Pedagógico Registrado',
-      date: `Hoje ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`,
-      author: 'Profa. Helena',
-      note,
-    };
-
-    setCases((prev) =>
-      prev.map((c) => (c.id === caseId ? { ...c, history: [...c.history, newHist] } : c))
-    );
-  };
-
-  // New report creation from student
-  const handleNewReport = (
-    newCaseData: Omit<
-      BullyingCase,
-      'id' | 'createdAtFormatted' | 'updatedAtFormatted' | 'timeAgo' | 'status' | 'statusLabel' | 'history' | 'messages'
-    >
-  ) => {
-    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-    const newId = `STN-2024-${randomSuffix}`;
-
-    const createdCase: BullyingCase = {
-      ...newCaseData,
-      id: newId,
-      createdAtFormatted: `${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', {
-        hour: '2-digit',
-        minute: '2-digit',
-      })}`,
-      updatedAtFormatted: `Hoje às ${new Date().toLocaleTimeString('pt-BR', {
-        hour: '2-digit',
-        minute: '2-digit',
-      })}`,
-      timeAgo: 'Agora mesmo',
-      status: 'triagem',
-      statusLabel: 'Em Triagem Pedagógica',
-      history: [
-        {
-          id: `hist-${Date.now()}`,
-          title: 'Relato Recebido e Anonimizado',
-          date: 'Agora mesmo',
-          note: 'Higienização de dados e proteção da fonte ativadas.',
-        },
-      ],
-      messages: [
-        {
-          id: `msg-${Date.now()}`,
-          sender: 'staff',
-          text: 'Olá! Recebemos seu relato e já estamos acompanhando com total discrição e cuidado. Fique tranquilo(a).',
-          time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-          read: true,
-        },
-      ],
-    };
-
-    setCases((prev) => [createdCase, ...prev]);
-    setSelectedCaseId(newId);
-    return newId;
-  };
-
-  const handleSelectMode = (mode: AppMode) => {
-    setAppMode(mode);
-    if (mode === 'student-tracking') {
-      setStudentTab('protocolos');
-    } else if (mode === 'student-report') {
-      setStudentTab('relatar');
+  const handleLogin = async (event: FormEvent) => {
+    event.preventDefault();
+    setLoginError('');
+    setLoggingIn(true);
+    try {
+      const result = await apiRequest<{ user: CurrentUser }>('/api/login', {
+        method: 'POST',
+        body: JSON.stringify(login),
+      });
+      setUser(result.user);
+      setIsStaffLoginOpen(false);
+      setLogin({ username: '', password: '' });
+    } catch (error) {
+      setLoginError(error instanceof Error ? error.message : 'Não foi possível entrar.');
+    } finally {
+      setLoggingIn(false);
     }
   };
 
-  const handleStudentNavigateTab = (tab: ActiveTab) => {
-    setStudentTab(tab);
-    if (tab === 'protocolos') {
-      setAppMode('student-tracking');
-    } else if (tab === 'relatar') {
-      setAppMode('student-report');
+  const handleLogout = async () => {
+    try {
+      await apiRequest('/api/logout', { method: 'POST' });
+      setUser(null);
+      setIsStaffLoginOpen(false);
+      setTab('inicio');
+      setAppError('');
+    } catch (error) {
+      setAppError(error instanceof Error ? error.message : 'Não foi possível encerrar a sessão.');
     }
   };
+
+  const openStaff = () => {
+    setLoginError('');
+    setIsStaffLoginOpen(true);
+  };
+
+  if (loading) return <div className="min-h-screen grid place-items-center text-[#00685f]">Carregando…</div>;
+  if (user) {
+    return (
+      <>
+        <SchoolStaffView
+          user={user}
+          onLogout={() => void handleLogout()}
+          onSwitchToStudentView={() => {
+            setUser(null);
+            setTab('inicio');
+          }}
+          onNavigateTab={navigateTab}
+        />
+        {isDisguised && <DisguiseCalculator onClose={() => setIsDisguised(false)} />}
+        <SosModal isOpen={isSosOpen} onClose={() => setIsSosOpen(false)} />
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f8f9ff] text-[#0d1c2e]">
-      {/* Top mode bar for reviewer/user convenience */}
-      <TopModeBar
-        currentMode={appMode}
-        onSelectMode={handleSelectMode}
-        onOpenDisguise={() => setIsDisguised(true)}
-        onOpenSos={() => setIsSosOpen(true)}
-      />
-
-      {/* Disguise screen (functional secret calculator) */}
-      {isDisguised && (
-        <DisguiseCalculator onClose={() => setIsDisguised(false)} />
-      )}
-
-      {/* Emergency SOS modal */}
-      <SosModal
-        isOpen={isSosOpen}
-        onClose={() => setIsSosOpen(false)}
-      />
-
-      {/* Evidence preview modal */}
-      <EvidenceModal
-        item={selectedEvidence}
-        onClose={() => setSelectedEvidence(null)}
-      />
-
-      {/* Render Main App Views */}
-      {appMode === 'school-staff' ? (
-        <SchoolStaffView
-          cases={cases}
-          selectedCaseId={selectedCaseId}
-          onSelectCase={setSelectedCaseId}
-          onUpdateStatus={handleUpdateStatus}
-          onAddHistoryNote={handleAddHistoryNote}
-          onStaffSendMessage={handleStaffSendMessage}
-          onViewEvidence={setSelectedEvidence}
-          onSwitchToStudentView={() => handleSelectMode('student-tracking')}
-        />
-      ) : studentTab === 'inicio' ? (
+      {appError && <div role="alert" className="mx-auto max-w-lg p-3 text-sm text-red-800 bg-red-50">{appError}</div>}
+      {isStaffLoginOpen ? (
+        <div className="min-h-screen pb-20 flex flex-col">
+          <header className="bg-white border-b border-[#dce9ff] p-4">
+            <div className="max-w-lg mx-auto flex justify-between items-center"><strong className="text-[#00685f]">Acesso da equipe</strong><button type="button" onClick={() => setIsStaffLoginOpen(false)} className="text-sm text-[#00685f] font-semibold">Voltar</button></div>
+          </header>
+          <main className="w-full max-w-lg mx-auto p-4 flex-1">
+            <form onSubmit={handleLogin} className="bg-white p-5 rounded-2xl border border-[#dce9ff] space-y-4">
+              <div><h1 className="text-xl font-bold">Entrar na gestão</h1><p className="text-sm text-slate-600 mt-1">Use a conta cadastrada pelo administrador.</p></div>
+              {loginError && <p role="alert" className="bg-red-50 text-red-800 p-3 rounded-xl text-sm">{loginError}</p>}
+              <label className="block text-sm font-semibold">Usuário<input required autoComplete="username" value={login.username} onChange={(event) => setLogin({ ...login, username: event.target.value })} className="block w-full mt-1 rounded-xl border p-3" /></label>
+              <label className="block text-sm font-semibold">Senha<input required type="password" autoComplete="current-password" value={login.password} onChange={(event) => setLogin({ ...login, password: event.target.value })} className="block w-full mt-1 rounded-xl border p-3" /></label>
+              <button disabled={loggingIn} className="w-full p-3 rounded-xl bg-[#00685f] text-white font-bold disabled:opacity-50">{loggingIn ? 'Entrando…' : 'Entrar'}</button>
+            </form>
+          </main>
+          <BottomNav selected={tab} onNavigate={navigateTab} />
+        </div>
+      ) : tab === 'inicio' ? (
         <StudentHomeView
-          onNavigateTab={handleStudentNavigateTab}
+          onNavigateTab={navigateTab}
           onOpenDisguise={() => setIsDisguised(true)}
           onOpenSos={() => setIsSosOpen(true)}
-          onOpenStaffView={() => setAppMode('school-staff')}
-          activeProtocolId={selectedCaseId}
+          onOpenStaffView={openStaff}
         />
-      ) : studentTab === 'guia' ? (
+      ) : tab === 'guia' ? (
         <StudentGuideView
-          onNavigateTab={handleStudentNavigateTab}
+          onNavigateTab={navigateTab}
           onOpenDisguise={() => setIsDisguised(true)}
           onOpenSos={() => setIsSosOpen(true)}
+          onOpenStaffView={openStaff}
         />
-      ) : studentTab === 'relatar' || appMode === 'student-report' ? (
+      ) : tab === 'relatar' ? (
         <StudentReportView
-          onNewReport={handleNewReport}
+          onNewReport={handleReport}
           onOpenDisguise={() => setIsDisguised(true)}
           onOpenSos={() => setIsSosOpen(true)}
-          onNavigateTab={handleStudentNavigateTab}
-          onOpenStaffView={() => setAppMode('school-staff')}
+          onNavigateTab={navigateTab}
+          onOpenStaffView={openStaff}
         />
       ) : (
         <StudentTrackingView
-          currentCase={currentCase}
-          onSendMessage={handleStudentSendMessage}
+          initialCredentials={receipt}
           onOpenDisguise={() => setIsDisguised(true)}
           onOpenSos={() => setIsSosOpen(true)}
-          onNavigateTab={handleStudentNavigateTab}
-          onOpenStaffView={() => setAppMode('school-staff')}
+          onNavigateTab={navigateTab}
+          onOpenStaffView={openStaff}
         />
       )}
+      {isDisguised && <DisguiseCalculator onClose={() => setIsDisguised(false)} />}
+      <SosModal isOpen={isSosOpen} onClose={() => setIsSosOpen(false)} />
     </div>
+  );
+}
+
+function BottomNav({ selected, onNavigate }: { selected: ActiveTab; onNavigate: (tab: ActiveTab) => void }) {
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 border-t border-slate-200">
+      <div className="max-w-lg mx-auto flex h-14">{(['inicio', 'relatar', 'protocolos', 'guia'] as const).map((tab) => (
+        <button type="button" key={tab} aria-current={selected === tab ? 'page' : undefined} onClick={() => onNavigate(tab)} className={`flex-1 text-xs font-semibold ${selected === tab ? 'text-[#00685f]' : 'text-slate-600'}`}>
+          {tab === 'inicio' ? 'Início' : tab === 'relatar' ? 'Relatar' : tab === 'protocolos' ? 'Protocolos' : 'Guia'}
+        </button>
+      ))}</div>
+    </nav>
   );
 }

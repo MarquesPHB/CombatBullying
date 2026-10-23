@@ -1,6 +1,11 @@
 node_modules/
 build/
-dist/
+dist
+.vercel/
+.env*
+__pycache__/
+*.py[cod]
+*.db
 coverage/
 .DS_Store
 *.log

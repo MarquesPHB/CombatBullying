@@ -5,7 +5,6 @@ interface StudentHomeViewProps {
   onOpenDisguise: () => void;
   onOpenSos: () => void;
   onOpenStaffView: () => void;
-  activeProtocolId: string;
 }
 
 export const StudentHomeView: React.FC<StudentHomeViewProps> = ({
@@ -13,7 +12,6 @@ export const StudentHomeView: React.FC<StudentHomeViewProps> = ({
   onOpenDisguise,
   onOpenSos,
   onOpenStaffView,
-  activeProtocolId,
 }) => {
   return (
     <div className="bg-[#f8f9fc] font-sans text-[#0d1c2e] min-h-screen flex flex-col pb-20">
@@ -35,10 +33,10 @@ export const StudentHomeView: React.FC<StudentHomeViewProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={onOpenDisguise}
-              className="h-8 px-2.5 rounded-full bg-[#dce9ff]/60 hover:bg-[#dce9ff] text-[#3d4947] flex items-center gap-1 active:scale-95 transition-all text-xs font-semibold"
+              aria-label="Abrir calculadora camuflada"
+              className="w-9 h-9 rounded-full bg-[#dce9ff]/60 hover:bg-[#dce9ff] text-[#3d4947] flex items-center justify-center active:scale-95 transition-all"
             >
-              <span className="material-symbols-outlined text-[15px]">calculate</span>
-              <span>Camuflar</span>
+              <span className="material-symbols-outlined text-[19px]">visibility_off</span>
             </button>
             <button
               onClick={onOpenSos}
@@ -57,7 +55,7 @@ export const StudentHomeView: React.FC<StudentHomeViewProps> = ({
         <div className="bg-gradient-to-br from-[#00685f] to-[#004d44] text-white p-5 rounded-2xl shadow-md space-y-3">
           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/15 text-xs backdrop-blur-xs font-semibold">
             <span className="material-symbols-outlined text-[15px] text-teal-200">lock</span>
-            100% Sigiloso • Protegido por Lei
+            Relato com identificação opcional
           </div>
           <h2 className="text-xl font-bold leading-tight">
             Ninguém deve passar por intimidação ou sofrimento sozinho.
@@ -83,25 +81,23 @@ export const StudentHomeView: React.FC<StudentHomeViewProps> = ({
           </div>
         </div>
 
-        {/* Active Protocol Shortcut */}
+        {/* Private follow-up guidance */}
         <div className="bg-white p-4 rounded-2xl border border-[#d2dedb]/50 shadow-xs space-y-2.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#00685f] animate-ping"></span>
               <span className="text-xs font-bold text-[#0d1c2e] uppercase tracking-wider">
-                Seu Protocolo em Aberto
+                Acompanhe seu relato
               </span>
             </div>
-            <span className="text-xs font-mono font-bold text-[#00685f]">#{activeProtocolId}</span>
           </div>
           <p className="text-xs text-[#4a5957]">
-            A equipe de orientação pedagógica enviou atualizações e mensagens discretas.
+            Após enviar um relato, guarde o protocolo e o PIN exibidos. Eles serão necessários para consultar atualizações e enviar mensagens.
           </p>
           <button
             onClick={() => onNavigateTab('protocolos')}
             className="w-full py-2 px-3 rounded-xl bg-[#eff4ff] hover:bg-[#e6eeff] text-[#00685f] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
           >
-            <span>Acompanhar Atendimento Agora</span>
+            <span>Informar protocolo e PIN</span>
             <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
           </button>
         </div>
@@ -112,9 +108,9 @@ export const StudentHomeView: React.FC<StudentHomeViewProps> = ({
             <div className="w-8 h-8 rounded-lg bg-teal-50 text-[#00685f] flex items-center justify-center mb-2">
               <span className="material-symbols-outlined text-[18px]">verified_user</span>
             </div>
-            <h4 className="text-xs font-bold text-[#0d1c2e]">Anonimato Real</h4>
+            <h4 className="text-xs font-bold text-[#0d1c2e]">Identificação opcional</h4>
             <p className="text-[11px] text-[#4a5957] leading-relaxed">
-              Metadados de imagens e dados de IP são higienizados criptograficamente.
+              Você pode enviar o relato sem informar nome ou contato. Compartilhe apenas o necessário.
             </p>
           </div>
 

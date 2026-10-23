@@ -1,650 +1,171 @@
-import React, { useState } from 'react';
-import { BullyingCase, EvidenceItem } from '../types';
-import { COMBATBULLYING_LOGO } from '../data/initialCases';
+import React, { FormEvent, useCallback, useEffect, useState } from 'react';
+import { apiRequest, CurrentUser, Protocol, ProtocolMessage, TeamUser } from '../lib/api';
 
 interface SchoolStaffViewProps {
-  cases: BullyingCase[];
-  selectedCaseId: string;
-  onSelectCase: (id: string) => void;
-  onUpdateStatus: (caseId: string, newStatus: BullyingCase['status']) => void;
-  onAddHistoryNote: (caseId: string, note: string) => void;
-  onStaffSendMessage: (caseId: string, text: string) => void;
-  onViewEvidence: (item: EvidenceItem) => void;
+  user: CurrentUser;
+  onLogout: () => void;
   onSwitchToStudentView: () => void;
+  onNavigateTab: (tab: 'inicio' | 'relatar' | 'protocolos' | 'guia') => void;
 }
 
-export const SchoolStaffView: React.FC<SchoolStaffViewProps> = ({
-  cases,
-  selectedCaseId,
-  onSelectCase,
-  onUpdateStatus,
-  onAddHistoryNote,
-  onStaffSendMessage,
-  onViewEvidence,
-  onSwitchToStudentView,
-}) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [activeFilter, setActiveFilter] = useState<'todas' | 'urgentes' | 'cyberbullying' | 'anonimas'>('todas');
-  const [sidebarMenu, setSidebarMenu] = useState('ocorrencias-e-triagem');
-  const [pedagogicalNote, setPedagogicalNote] = useState('');
-  const [staffMessage, setStaffMessage] = useState('');
-  const [exportNotice, setExportNotice] = useState(false);
+const statuses = ['Recebida', 'Em triagem', 'Em tratativa', 'Encaminhada', 'Concluída'];
 
-  const currentCase = cases.find((c) => c.id === selectedCaseId) || cases[0];
+export const SchoolStaffView: React.FC<SchoolStaffViewProps> = ({ user, onLogout, onSwitchToStudentView, onNavigateTab }) => {
+  const [protocols, setProtocols] = useState<Protocol[]>([]);
+  const [team, setTeam] = useState<TeamUser[]>([]);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [messages, setMessages] = useState<ProtocolMessage[]>([]);
+  const [reply, setReply] = useState('');
+  const [notes, setNotes] = useState('');
+  const [createUser, setCreateUser] = useState({ username: '', display_name: '', password: '' });
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
 
-  // Filtering cases
-  const filteredCases = cases.filter((item) => {
-    const matchesSearch =
-      item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.classOrGrade.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.summary.toLowerCase().includes(searchTerm.toLowerCase());
+  const loadProtocols = useCallback(async () => {
+    const result = await apiRequest<{ protocols: Protocol[] }>('/api/protocols');
+    setProtocols(result.protocols);
+    setSelectedId((current) => current && result.protocols.some((item) => item.id === current) ? current : result.protocols[0]?.id ?? null);
+  }, []);
+  const loadTeam = useCallback(async () => {
+    if (user.role === 'admin') {
+      const result = await apiRequest<{ users: TeamUser[] }>('/api/users');
+      setTeam(result.users);
+    }
+  }, [user.role]);
 
-    if (!matchesSearch) return false;
+  useEffect(() => {
+    void Promise.all([loadProtocols(), loadTeam()])
+      .catch((requestError) => setError(requestError instanceof Error ? requestError.message : 'Não foi possível carregar os dados.'))
+      .finally(() => setLoading(false));
+  }, [loadProtocols, loadTeam]);
 
-    if (activeFilter === 'urgentes') return item.urgency === 'alta';
-    if (activeFilter === 'cyberbullying') return item.category === 'cyberbullying';
-    if (activeFilter === 'anonimas') return item.isAnonymous;
+  const selected = protocols.find((item) => item.id === selectedId) ?? null;
+  useEffect(() => {
+    setNotes(selected?.treatment_notes ?? '');
+    if (!selected) {
+      setMessages([]);
+      return;
+    }
+    void apiRequest<{ messages: ProtocolMessage[] }>(`/api/protocols/${selected.id}/messages`)
+      .then((result) => setMessages(result.messages))
+      .catch((requestError) => setError(requestError instanceof Error ? requestError.message : 'Não foi possível carregar as mensagens.'));
+  }, [selected?.id, selected?.treatment_notes]);
 
-    return true;
-  });
-
-  const handleSaveNote = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!pedagogicalNote.trim()) return;
-    onAddHistoryNote(currentCase.id, pedagogicalNote.trim());
-    setPedagogicalNote('');
+  const updateProtocol = async (values: Record<string, string | number | null>) => {
+    if (!selected) return;
+    setBusy(true);
+    setError('');
+    setNotice('');
+    try {
+      await apiRequest(`/api/protocols/${selected.id}`, { method: 'PATCH', body: JSON.stringify(values) });
+      setNotice('Protocolo atualizado.');
+      await loadProtocols();
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : 'Não foi possível atualizar o protocolo.');
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!staffMessage.trim()) return;
-    onStaffSendMessage(currentCase.id, staffMessage.trim());
-    setStaffMessage('');
+  const sendMessage = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!selected || !reply.trim()) return;
+    setBusy(true);
+    setError('');
+    try {
+      await apiRequest(`/api/protocols/${selected.id}/messages`, {
+        method: 'POST',
+        body: JSON.stringify({ message: reply.trim() }),
+      });
+      setReply('');
+      const result = await apiRequest<{ messages: ProtocolMessage[] }>(`/api/protocols/${selected.id}/messages`);
+      setMessages(result.messages);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : 'Não foi possível enviar a mensagem.');
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const handleExport = () => {
-    setExportNotice(true);
-    setTimeout(() => setExportNotice(false), 3000);
+  const handleCreateUser = async (event: FormEvent) => {
+    event.preventDefault();
+    setBusy(true);
+    setError('');
+    setNotice('');
+    try {
+      await apiRequest('/api/users', { method: 'POST', body: JSON.stringify(createUser) });
+      setCreateUser({ username: '', display_name: '', password: '' });
+      setNotice('Usuário cadastrado.');
+      await loadTeam();
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : 'Não foi possível cadastrar o usuário.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
-    <div className="bg-[#f8f9ff] text-[#0d1c2e] font-sans antialiased min-h-screen flex">
-      {/* Sidebar de Gestão Escolar */}
-      <aside className="fixed left-0 top-0 h-full w-72 bg-white z-50 flex flex-col justify-between shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-r border-[#e6eeff]">
-        <div className="flex flex-col">
-          {/* Logo Brand */}
-          <div className="h-16 px-6 flex items-center gap-3 bg-white border-b border-[#e6eeff]">
-            <img
-              alt="Combatbullying Logo"
-              className="h-8 w-auto object-contain"
-              src={COMBATBULLYING_LOGO}
-              referrerPolicy="no-referrer"
-            />
-            <div className="flex flex-col">
-              <span className="text-[17px] font-bold text-[#00685f] leading-tight tracking-tight">
-                Combatbullying
-              </span>
-              <span className="text-[11px] text-[#3d4947] font-medium tracking-wide uppercase">
-                Gestão Escolar
-              </span>
-            </div>
-          </div>
-
-          {/* Criptografia Badge */}
-          <div className="px-4 py-3">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-[#eff4ff] rounded-xl text-[#00685f] text-[11px]">
-              <span className="material-symbols-outlined text-[16px] text-[#00685f]">lock</span>
-              <span className="font-semibold">Canal Criptografado Ponta a Ponta</span>
-            </div>
-          </div>
-
-          {/* Navigation Links */}
-          <nav className="flex flex-col gap-1 px-3 mt-1">
-            <button
-              onClick={() => setSidebarMenu('painel-geral')}
-              className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-[14px] font-medium transition-colors text-left ${
-                sidebarMenu === 'painel-geral'
-                  ? 'bg-[#008378] text-[#f4fffc] font-semibold'
-                  : 'text-[#3d4947] hover:bg-[#dce9ff] hover:text-[#0d1c2e]'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[20px]">space_dashboard</span>
-              <span>Painel Geral</span>
-            </button>
-
-            <button
-              onClick={() => setSidebarMenu('ocorrencias-e-triagem')}
-              className={`flex items-center justify-between px-4 py-2.5 rounded-xl text-[14px] font-medium transition-colors text-left ${
-                sidebarMenu === 'ocorrencias-e-triagem'
-                  ? 'bg-[#008378] text-[#f4fffc] font-semibold'
-                  : 'text-[#3d4947] hover:bg-[#dce9ff] hover:text-[#0d1c2e]'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <span className="material-symbols-outlined text-[20px]">inbox</span>
-                <span>Ocorrências e Triagem</span>
-              </div>
-              <span className="flex items-center justify-center px-2 py-0.5 rounded-full bg-[#ba1a1a] text-white text-[12px] font-bold">
-                {cases.length}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setSidebarMenu('orientacoes-e-mensagens')}
-              className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-[14px] font-medium transition-colors text-left ${
-                sidebarMenu === 'orientacoes-e-mensagens'
-                  ? 'bg-[#008378] text-[#f4fffc] font-semibold'
-                  : 'text-[#3d4947] hover:bg-[#dce9ff] hover:text-[#0d1c2e]'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[20px]">chat_bubble</span>
-              <span>Orientações e Mensagens</span>
-            </button>
-
-            <button
-              onClick={() => setSidebarMenu('relatorios-estatisticos')}
-              className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-[14px] font-medium transition-colors text-left ${
-                sidebarMenu === 'relatorios-estatisticos'
-                  ? 'bg-[#008378] text-[#f4fffc] font-semibold'
-                  : 'text-[#3d4947] hover:bg-[#dce9ff] hover:text-[#0d1c2e]'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[20px]">analytics</span>
-              <span>Relatórios Estatísticos</span>
-            </button>
-
-            <button
-              onClick={() => setSidebarMenu('cartilhas-e-recursos')}
-              className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-[14px] font-medium transition-colors text-left ${
-                sidebarMenu === 'cartilhas-e-recursos'
-                  ? 'bg-[#008378] text-[#f4fffc] font-semibold'
-                  : 'text-[#3d4947] hover:bg-[#dce9ff] hover:text-[#0d1c2e]'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[20px]">menu_book</span>
-              <span>Cartilhas e Recursos</span>
-            </button>
-
-            <button
-              onClick={() => setSidebarMenu('configuracoes-auditoria')}
-              className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-[14px] font-medium transition-colors text-left ${
-                sidebarMenu === 'configuracoes-auditoria'
-                  ? 'bg-[#008378] text-[#f4fffc] font-semibold'
-                  : 'text-[#3d4947] hover:bg-[#dce9ff] hover:text-[#0d1c2e]'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[20px]">verified_user</span>
-              <span>Configurações / Auditoria</span>
-            </button>
-          </nav>
-        </div>
-
-        {/* Bottom sidebar info & Switch button */}
-        <div className="p-4 flex flex-col gap-2.5 border-t border-[#e6eeff]">
-          <button
-            onClick={onSwitchToStudentView}
-            className="w-full py-2 px-3 rounded-xl bg-[#00685f]/10 hover:bg-[#00685f]/20 text-[#00685f] font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-          >
-            <span className="material-symbols-outlined text-[16px]">smartphone</span>
-            <span>Ver Visão do Aluno (Tela 1/2)</span>
-          </button>
-
-          <div className="p-3 bg-[#eff4ff] rounded-xl flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#00685f] animate-pulse"></span>
-              <span className="text-[12px] font-bold text-[#0d1c2e]">Protocolo Ativo</span>
-            </div>
-            <span className="text-[11px] text-[#6d7a77] font-semibold">LGPD + ECA</span>
+    <div className="min-h-screen bg-[#f8f9ff] text-[#0d1c2e] pb-20">
+      <header className="sticky top-0 z-40 bg-white border-b border-[#dce9ff]">
+        <div className="max-w-6xl mx-auto min-h-16 px-4 py-2 flex flex-wrap items-center justify-between gap-2">
+          <div><h1 className="font-bold text-[#00685f]">Gestão de protocolos</h1><p className="text-xs text-slate-600">{user.display_name} · {user.role === 'admin' ? 'Administrador' : 'Responsável'}</p></div>
+          <div className="flex gap-2">
+            <button type="button" onClick={onSwitchToStudentView} className="px-3 py-2 rounded-lg bg-[#eff4ff] text-sm font-semibold">Tela inicial</button>
+            <button type="button" onClick={onLogout} className="px-3 py-2 rounded-lg bg-slate-100 text-sm font-semibold">Sair</button>
           </div>
         </div>
-      </aside>
-
-      {/* Main Content Body */}
-      <div className="pl-72 flex-1 flex flex-col min-w-0">
-        {/* Topbar Gestão Escolar */}
-        <header className="sticky top-0 h-16 bg-[#f8f9ff]/85 backdrop-blur-xl z-40 shadow-[0_1px_8px_rgba(0,0,0,0.04)] px-6 flex items-center justify-between border-b border-[#e6eeff]">
-          <div className="flex items-center gap-3">
-            <span className="text-[18px] text-[#0d1c2e] font-bold">Combatbullying</span>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#6df5e1]/40 text-[#006f64] text-[12px] font-medium">
-              <span className="material-symbols-outlined text-[14px]">verified</span>
-              Ambiente Seguro &amp; Sigiloso
-            </span>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3">
-              <div className="text-right hidden sm:flex flex-col">
-                <span className="text-[13px] text-[#0d1c2e] font-semibold leading-snug">
-                  Profa. Helena
-                </span>
-                <span className="text-[11px] text-[#6d7a77]">Orientação Pedagógica</span>
-              </div>
-              <div className="w-9 h-9 rounded-full bg-[#00685f]/10 text-[#00685f] flex items-center justify-center font-semibold text-sm ring-1 ring-[#00685f]/20">
-                <span className="material-symbols-outlined text-[20px]">account_circle</span>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        {/* Main Workspace */}
-        <main className="p-6 flex flex-col gap-6">
-          {/* Top Stat Counters Bar (Exatamente como em Image 9.png) */}
-          <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-white p-4 rounded-xl shadow-xs border border-[#e6eeff] flex flex-col justify-between">
-              <span className="text-[11px] text-[#6d7a77] font-semibold tracking-wide uppercase">
-                Em Aberto
-              </span>
-              <div className="mt-2 flex items-baseline gap-2">
-                <span className="text-[26px] text-[#0d1c2e] font-bold leading-none">14</span>
-                <span className="text-[11px] text-[#6d7a77]">casos</span>
-              </div>
-            </div>
-
-            <div className="bg-white p-4 rounded-xl shadow-xs border border-[#e6eeff] flex flex-col justify-between">
-              <span className="text-[11px] text-[#ba1a1a] font-semibold tracking-wide uppercase">
-                Alta Prioridade
-              </span>
-              <div className="mt-2 flex items-baseline gap-2">
-                <span className="text-[26px] text-[#ba1a1a] font-bold leading-none">3</span>
-                <span className="text-[11px] text-[#ba1a1a]/80">requer atenção</span>
-              </div>
-            </div>
-
-            <div className="bg-white p-4 rounded-xl shadow-xs border border-[#e6eeff] flex flex-col justify-between">
-              <span className="text-[11px] text-[#6d7a77] font-semibold tracking-wide uppercase">
-                Em Acompanhamento
-              </span>
-              <div className="mt-2 flex items-baseline gap-2">
-                <span className="text-[26px] text-[#0d1c2e] font-bold leading-none">8</span>
-                <span className="text-[11px] text-[#6d7a77]">em escuta</span>
-              </div>
-            </div>
-
-            <div className="bg-white p-4 rounded-xl shadow-xs border border-[#e6eeff] flex flex-col justify-between">
-              <span className="text-[11px] text-[#6d7a77] font-semibold tracking-wide uppercase">
-                Resolvidas no Mês
-              </span>
-              <div className="mt-2 flex items-baseline gap-2">
-                <span className="text-[26px] text-[#00685f] font-bold leading-none">29</span>
-                <span className="text-[11px] text-[#00685f]/80">concluídas</span>
-              </div>
-            </div>
+      </header>
+      <main className="max-w-6xl mx-auto p-4 space-y-4">
+        {(error || notice) && <p role={error ? 'alert' : 'status'} className={`p-3 rounded-xl text-sm ${error ? 'bg-red-50 text-red-800' : 'bg-green-50 text-green-800'}`}>{error || notice}</p>}
+        {user.role === 'admin' && <details className="bg-white rounded-2xl border border-[#dce9ff] p-4">
+          <summary className="font-bold cursor-pointer">Cadastrar usuário responsável</summary>
+          <form onSubmit={handleCreateUser} className="grid sm:grid-cols-4 gap-3 mt-4">
+            <input required value={createUser.display_name} onChange={(event) => setCreateUser({ ...createUser, display_name: event.target.value })} placeholder="Nome" aria-label="Nome completo" className="rounded-lg border p-2" />
+            <input required value={createUser.username} onChange={(event) => setCreateUser({ ...createUser, username: event.target.value })} placeholder="Usuário" aria-label="Nome de usuário" className="rounded-lg border p-2" />
+            <input required minLength={12} type="password" value={createUser.password} onChange={(event) => setCreateUser({ ...createUser, password: event.target.value })} placeholder="Senha (mínimo 12 caracteres)" aria-label="Senha temporária" className="rounded-lg border p-2" />
+            <button disabled={busy} className="rounded-lg bg-[#00685f] text-white font-semibold p-2 disabled:opacity-50">Cadastrar</button>
+          </form>
+          {!!team.length && <p className="text-xs text-slate-500 mt-3">Equipe cadastrada: {team.map((member) => member.display_name).join(', ')}</p>}
+        </details>}
+        <div className="grid lg:grid-cols-[minmax(270px,0.8fr)_minmax(0,1.7fr)] gap-4 items-start">
+          <section className="bg-white rounded-2xl border border-[#dce9ff] overflow-hidden">
+            <div className="px-4 py-3 border-b flex items-center justify-between"><h2 className="font-bold">Protocolos</h2><span className="text-xs text-slate-500">{protocols.length}</span></div>
+            {loading ? <p className="p-4 text-sm text-slate-500">Carregando…</p> : protocols.length ? <div className="max-h-[72vh] overflow-auto divide-y">
+              {protocols.map((protocol) => <button key={protocol.id} type="button" onClick={() => setSelectedId(protocol.id)} className={`w-full text-left p-4 hover:bg-[#f8f9ff] ${selectedId === protocol.id ? 'bg-[#eff8f6]' : ''}`}>
+                <div className="flex justify-between gap-2"><strong className="font-mono text-sm">{protocol.protocol_code}</strong><span className="text-[11px] text-[#00685f]">{protocol.status}</span></div>
+                <p className="text-xs text-slate-600 mt-1">{protocol.aggression_type} · {protocol.occurred_date}</p>
+                <p className="text-[11px] text-slate-500 mt-1">{protocol.assigned_name ? `Responsável: ${protocol.assigned_name}` : 'Sem responsável atribuído'}</p>
+              </button>)}
+            </div> : <p className="p-4 text-sm text-slate-500">Nenhum protocolo disponível para sua conta.</p>}
           </section>
 
-          {/* Main Split Architecture: List/Filter (Left) vs Detail/Actions (Right) */}
-          <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-            {/* LEFT PANEL: UC06 Visualizar e Filtrar Ocorrências (5 Cols) */}
-            <aside className="xl:col-span-5 flex flex-col gap-4">
-              <div className="bg-white p-4 rounded-xl shadow-xs border border-[#e6eeff] flex flex-col gap-3.5">
-                {/* Search */}
-                <div className="relative">
-                  <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#6d7a77] text-[18px]">
-                    search
-                  </span>
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Buscar protocolo, série ou termo..."
-                    className="w-full pl-9 pr-4 py-2 bg-[#eff4ff] rounded-lg text-[#0d1c2e] text-[13px] placeholder:text-[#6d7a77] focus:outline-none focus:bg-white focus:ring-1 focus:ring-[#00685f] transition-all"
-                  />
-                </div>
-
-                {/* Filter chips */}
-                <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-1">
-                  <button
-                    onClick={() => setActiveFilter('todas')}
-                    className={`px-3 py-1 rounded-full text-[12px] font-semibold transition-colors cursor-pointer shrink-0 ${
-                      activeFilter === 'todas'
-                        ? 'bg-[#00685f] text-white'
-                        : 'bg-[#eff4ff] text-[#3d4947] hover:bg-[#e6eeff]'
-                    }`}
-                  >
-                    Todas ({cases.length})
-                  </button>
-                  <button
-                    onClick={() => setActiveFilter('urgentes')}
-                    className={`px-3 py-1 rounded-full text-[12px] font-semibold transition-colors cursor-pointer shrink-0 ${
-                      activeFilter === 'urgentes'
-                        ? 'bg-[#00685f] text-white'
-                        : 'bg-[#eff4ff] text-[#3d4947] hover:bg-[#e6eeff]'
-                    }`}
-                  >
-                    Urgentes (3)
-                  </button>
-                  <button
-                    onClick={() => setActiveFilter('cyberbullying')}
-                    className={`px-3 py-1 rounded-full text-[12px] font-semibold transition-colors cursor-pointer shrink-0 ${
-                      activeFilter === 'cyberbullying'
-                        ? 'bg-[#00685f] text-white'
-                        : 'bg-[#eff4ff] text-[#3d4947] hover:bg-[#e6eeff]'
-                    }`}
-                  >
-                    Cyberbullying
-                  </button>
-                  <button
-                    onClick={() => setActiveFilter('anonimas')}
-                    className={`px-3 py-1 rounded-full text-[12px] font-semibold transition-colors cursor-pointer shrink-0 ${
-                      activeFilter === 'anonimas'
-                        ? 'bg-[#00685f] text-white'
-                        : 'bg-[#eff4ff] text-[#3d4947] hover:bg-[#e6eeff]'
-                    }`}
-                  >
-                    Anônimas
-                  </button>
-                </div>
-
-                {/* List of cases */}
-                <div className="flex flex-col gap-1.5 mt-1">
-                  {filteredCases.map((item) => {
-                    const isSelected = item.id === currentCase.id;
-                    const isHighPriority = item.urgency === 'alta';
-
-                    return (
-                      <div
-                        key={item.id}
-                        onClick={() => onSelectCase(item.id)}
-                        className={`p-3.5 rounded-xl cursor-pointer transition-all border ${
-                          isSelected
-                            ? 'bg-[#eff4ff]/80 border-l-4 border-l-[#00685f] border-t-transparent border-r-transparent border-b-transparent shadow-xs'
-                            : 'hover:bg-[#eff4ff]/50 border-transparent'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className={`text-[13px] font-bold ${isSelected ? 'text-[#00685f]' : 'text-[#0d1c2e]'}`}>
-                            {item.id}
-                          </span>
-                          <span className="text-[11px] text-[#6d7a77]">{item.timeAgo}</span>
-                        </div>
-
-                        <h3 className="text-[14px] font-semibold text-[#0d1c2e] mt-1 leading-snug">
-                          {item.title}
-                        </h3>
-
-                        <p className="text-[13px] text-[#3d4947] line-clamp-2 mt-1 leading-relaxed">
-                          {item.summary}
-                        </p>
-
-                        <div className="mt-2.5 flex items-center justify-between text-[#3d4947] text-[11px] pt-1">
-                          <span className="text-[#6d7a77]">
-                            {item.classOrGrade} • {item.isAnonymous ? 'Anônimo' : item.authorName}
-                          </span>
-                          <span
-                            className={`px-2 py-0.5 rounded-full font-medium text-[11px] ${
-                              isHighPriority
-                                ? 'bg-[#ffdad6] text-[#93000a]'
-                                : item.status === 'triagem'
-                                ? 'bg-[#6df5e1]/40 text-[#006f64]'
-                                : 'bg-[#e6eeff] text-[#3d4947]'
-                            }`}
-                          >
-                            {isHighPriority ? 'Alta Prioridade' : item.statusLabel}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Pagination */}
-                <div className="pt-2 flex items-center justify-between text-[11px] text-[#6d7a77] border-t border-[#d5e3fc]/60">
-                  <span>{cases.length} relatos ativos</span>
-                  <div className="flex items-center gap-1">
-                    <button className="w-6 h-6 rounded flex items-center justify-center hover:bg-[#e6eeff] cursor-pointer">
-                      <span className="material-symbols-outlined text-[16px]">chevron_left</span>
-                    </button>
-                    <span className="font-semibold text-[#00685f] px-1">1 / 4</span>
-                    <button className="w-6 h-6 rounded flex items-center justify-center hover:bg-[#e6eeff] cursor-pointer">
-                      <span className="material-symbols-outlined text-[16px]">chevron_right</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </aside>
-
-            {/* RIGHT PANEL: Detailed Active Case Panel (STN-2024-8942) (7 Cols) */}
-            <section className="xl:col-span-7 flex flex-col gap-4">
-              <div className="bg-white p-6 rounded-xl shadow-xs border border-[#e6eeff] flex flex-col gap-6">
-                {/* Header Case Details */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-[#dce9ff] pb-4">
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-[20px] text-[#0d1c2e] font-bold">
-                        Protocolo #{currentCase.id}
-                      </h2>
-                      <span className="px-2.5 py-0.5 rounded-full bg-[#6df5e1]/30 text-[#006f64] text-[12px] font-medium">
-                        {currentCase.isAnonymous ? '100% Anônimo' : 'Identificado'}
-                      </span>
-                    </div>
-                    <span className="text-[11px] text-[#6d7a77]">
-                      Registrado em {currentCase.createdAtFormatted} • Urgência{' '}
-                      {currentCase.urgency === 'alta' ? 'Alta' : 'Moderada/Alta'}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <div className="relative">
-                      <select
-                        value={currentCase.status}
-                        onChange={(e) => onUpdateStatus(currentCase.id, e.target.value as any)}
-                        className="appearance-none bg-[#eff4ff] py-1.5 pl-3 pr-8 rounded-lg text-[13px] font-semibold text-[#00685f] focus:outline-none focus:ring-1 focus:ring-[#00685f] cursor-pointer"
-                      >
-                        <option value="triagem">Em Triagem Pedagógica</option>
-                        <option value="acolhimento">Em Acolhimento</option>
-                        <option value="concluido">Finalizado com Segurança</option>
-                      </select>
-                      <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[18px] text-[#00685f] pointer-events-none">
-                        expand_more
-                      </span>
-                    </div>
-
-                    <button
-                      onClick={handleExport}
-                      className="px-3 py-1.5 rounded-lg bg-[#eff4ff] hover:bg-[#e6eeff] text-[#0d1c2e] text-[12px] font-medium transition-colors flex items-center gap-1 cursor-pointer"
-                      title="Exportar dossiê pedagógico anônimo em PDF"
-                    >
-                      <span className="material-symbols-outlined text-[16px] text-[#6d7a77]">
-                        picture_as_pdf
-                      </span>
-                      Exportar
-                    </button>
-
-                    <button
-                      onClick={() => onUpdateStatus(currentCase.id, 'acolhimento')}
-                      className="px-3 py-1.5 rounded-lg bg-[#eff4ff] hover:bg-[#e6eeff] text-[#0d1c2e] text-[12px] font-medium transition-colors flex items-center gap-1 cursor-pointer"
-                    >
-                      <span className="material-symbols-outlined text-[16px] text-[#6d7a77]">group</span>
-                      Acolhimento
-                    </button>
-                  </div>
-                </div>
-
-                {exportNotice && (
-                  <div className="p-2.5 bg-teal-50 border border-teal-200 text-[#00685f] rounded-lg text-xs flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[18px]">check_circle</span>
-                    <span>Dossiê pedagógico seguro #{currentCase.id} gerado com metadados anonimizados.</span>
-                  </div>
-                )}
-
-                {/* Transcrição do Relato */}
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[13px] font-bold text-[#0d1c2e] uppercase tracking-wide">
-                      Transcrição do Relato
-                    </span>
-                    <span className="text-[11px] text-[#6d7a77]">Protegido por sigilo escolar</span>
-                  </div>
-
-                  <div className="p-4 bg-[#eff4ff]/50 rounded-xl text-[#0d1c2e] text-[15px] leading-relaxed border border-[#e6eeff]/60">
-                    <p className="italic text-[#3d4947]">"{currentCase.details}"</p>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-4 text-[11px] text-[#3d4947] pt-1">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[#6d7a77]">Papel:</span>
-                      <span className="font-semibold text-[#0d1c2e]">{currentCase.roleLabel}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[#6d7a77]">Turma:</span>
-                      <span className="font-semibold text-[#0d1c2e]">{currentCase.classOrGrade}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[#6d7a77]">Canal:</span>
-                      <span className="font-semibold text-[#0d1c2e]">{currentCase.channel}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[#6d7a77]">Identidade:</span>
-                      <span className="font-semibold text-[#00685f]">
-                        {currentCase.isAnonymous ? 'Criptografada' : currentCase.authorName}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Evidências Anexadas */}
-                <div className="flex flex-col gap-2">
-                  <span className="text-[13px] font-bold text-[#0d1c2e] uppercase tracking-wide">
-                    Evidências Anexadas ({currentCase.evidence.length})
-                  </span>
-
-                  {currentCase.evidence.length === 0 ? (
-                    <div className="p-3 bg-[#eff4ff]/40 rounded-xl text-xs text-[#6d7a77] italic">
-                      Nenhuma evidência digital anexada a este relato.
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {currentCase.evidence.map((ev) => (
-                        <div
-                          key={ev.id}
-                          className="p-3 bg-[#eff4ff]/60 rounded-xl flex items-center justify-between gap-3 hover:bg-[#eff4ff] transition-colors border border-[#e6eeff]/70"
-                        >
-                          <div className="flex items-center gap-3 overflow-hidden">
-                            <span className="w-9 h-9 rounded-lg bg-[#e6eeff] flex items-center justify-center text-[#00685f]">
-                              <span className="material-symbols-outlined text-[20px]">
-                                {ev.type === 'image' ? 'image' : 'graphic_eq'}
-                              </span>
-                            </span>
-                            <div className="flex flex-col truncate">
-                              <span className="text-[12px] font-semibold text-[#0d1c2e] truncate">
-                                {ev.name}
-                              </span>
-                              <span className="text-[11px] text-[#6d7a77]">{ev.size}</span>
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => onViewEvidence(ev)}
-                            className="text-[12px] font-bold text-[#00685f] hover:underline px-2 cursor-pointer shrink-0"
-                            type="button"
-                          >
-                            {ev.type === 'image' ? 'Ver' : 'Ouvir'}
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Histórico Pedagógico */}
-                <div className="flex flex-col gap-3 border-t border-[#dce9ff] pt-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[13px] font-bold text-[#0d1c2e] uppercase tracking-wide">
-                      Histórico Pedagógico
-                    </span>
-                    <span className="text-[11px] text-[#6d7a77]">Acesso restrito</span>
-                  </div>
-
-                  <div className="relative pl-5 flex flex-col gap-3 before:absolute before:left-1.5 before:top-2 before:bottom-2 before:w-px before:bg-[#d5e3fc]">
-                    {currentCase.history.map((hist) => (
-                      <div key={hist.id} className="relative flex flex-col">
-                        <span className="absolute -left-5 top-1.5 w-3 h-3 rounded-full bg-[#00685f] flex items-center justify-center ring-2 ring-white"></span>
-                        <div className="flex items-baseline justify-between">
-                          <span className="text-[12px] font-bold text-[#0d1c2e]">{hist.title}</span>
-                          <span className="text-[11px] text-[#6d7a77]">{hist.date}</span>
-                        </div>
-                        <p className="text-[13px] text-[#3d4947] mt-0.5">
-                          {hist.author && <strong className="text-[#0d1c2e] font-semibold">{hist.author}: </strong>}
-                          {hist.note}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Add note */}
-                  <form onSubmit={handleSaveNote} className="flex flex-col gap-2 mt-1">
-                    <textarea
-                      value={pedagogicalNote}
-                      onChange={(e) => setPedagogicalNote(e.target.value)}
-                      placeholder="Registrar nova anotação ou providência pedagógica..."
-                      rows={2}
-                      className="w-full p-2.5 bg-[#eff4ff] rounded-lg text-[#0d1c2e] text-[13px] placeholder:text-[#6d7a77] focus:outline-none focus:bg-white focus:ring-1 focus:ring-[#00685f] transition-all resize-none border border-transparent focus:border-[#00685f]/30"
-                    ></textarea>
-                    <div className="flex justify-end">
-                      <button
-                        type="submit"
-                        className="px-3.5 py-1.5 rounded-lg bg-[#00685f] text-white text-[12px] font-semibold hover:bg-[#008378] transition-colors shadow-xs cursor-pointer"
-                      >
-                        Salvar Parecer
-                      </button>
-                    </div>
-                  </form>
-                </div>
-
-                {/* Comunicação Segura com o Aluno */}
-                <div className="flex flex-col gap-3 border-t border-[#dce9ff] pt-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[13px] font-bold text-[#0d1c2e] uppercase tracking-wide">
-                      Comunicação Segura com o Aluno
-                    </span>
-                    <span className="text-[11px] text-[#6d7a77] flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[13px] text-[#00685f]">lock</span>
-                      Ponta a ponta
-                    </span>
-                  </div>
-
-                  <div className="flex flex-col gap-2 p-3 bg-[#eff4ff]/50 rounded-xl border border-[#e6eeff]">
-                    {currentCase.messages.map((m) => {
-                      const isStaff = m.sender === 'staff';
-                      return isStaff ? (
-                        <div key={m.id} className="flex flex-col gap-1 max-w-[85%] self-end">
-                          <div className="p-3 rounded-2xl rounded-tr-xs bg-[#00685f] text-white text-[13px] leading-relaxed shadow-xs">
-                            {m.text}
-                          </div>
-                          <span className="text-[10px] text-[#6d7a77] self-end">{m.time} • Entregue em sigilo</span>
-                        </div>
-                      ) : (
-                        <div key={m.id} className="flex flex-col gap-1 max-w-[85%] self-start">
-                          <div className="p-3 rounded-2xl rounded-tl-xs bg-white text-[#0d1c2e] text-[13px] leading-relaxed shadow-xs border border-[#e6eeff]">
-                            {m.text}
-                          </div>
-                          <span className="text-[10px] text-[#6d7a77]">{m.time}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  <form onSubmit={handleSendMessage} className="relative">
-                    <textarea
-                      value={staffMessage}
-                      onChange={(e) => setStaffMessage(e.target.value)}
-                      placeholder="Enviar mensagem segura ao aluno..."
-                      rows={2}
-                      className="w-full p-2.5 pr-12 bg-[#eff4ff] rounded-xl text-[#0d1c2e] text-[13px] placeholder:text-[#6d7a77] focus:outline-none focus:bg-white focus:ring-1 focus:ring-[#00685f] transition-all resize-none border border-transparent focus:border-[#00685f]/30"
-                    ></textarea>
-                    <button
-                      type="submit"
-                      title="Enviar"
-                      className="absolute right-2.5 bottom-2.5 p-1.5 rounded-lg bg-[#00685f] text-white hover:bg-[#008378] transition-colors flex items-center justify-center cursor-pointer"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">send</span>
-                    </button>
-                  </form>
-                </div>
-              </div>
-            </section>
-          </div>
-        </main>
-      </div>
+          {selected ? <section className="bg-white rounded-2xl border border-[#dce9ff] p-4 space-y-4 min-w-0">
+            <div className="flex flex-wrap justify-between gap-3"><div><p className="text-xs text-slate-500">Protocolo</p><h2 className="font-mono font-bold">{selected.protocol_code}</h2></div><span className="self-start px-3 py-1 rounded-full bg-teal-50 text-[#00685f] text-xs font-bold">{selected.status}</span></div>
+            <div className="grid sm:grid-cols-2 gap-3 text-sm">
+              <p><span className="block text-xs text-slate-500">Tipo de agressão</span>{selected.aggression_type}</p>
+              <p><span className="block text-xs text-slate-500">Data e hora</span>{selected.occurred_date} · {selected.occurred_time}</p>
+              <p><span className="block text-xs text-slate-500">Local / turma</span>{selected.location || 'Não informado'} · {selected.class_series || 'Não informada'}</p>
+              <p><span className="block text-xs text-slate-500">Relato por</span>{selected.privacy === 'anon' ? 'Anônimo' : selected.reporter_name || 'Identificado'}</p>
+            </div>
+            <div className="bg-[#f8f9ff] rounded-xl p-3"><h3 className="font-semibold text-sm mb-1">Relato</h3><p className="text-sm whitespace-pre-wrap break-words">{selected.report}</p></div>
+            {selected.privacy === 'identified' && (selected.reporter_email || selected.reporter_phone) && <p className="text-xs text-slate-600">Contato informado: {[selected.reporter_email, selected.reporter_phone].filter(Boolean).join(' · ')}</p>}
+            <div className="grid sm:grid-cols-2 gap-3">
+              <label className="text-sm font-semibold">Status<select disabled={busy} value={selected.status} onChange={(event) => void updateProtocol({ status: event.target.value })} className="block w-full mt-1 rounded-lg border p-2">{statuses.map((status) => <option key={status}>{status}</option>)}</select></label>
+              {user.role === 'admin' && <label className="text-sm font-semibold">Encaminhar para<select disabled={busy} value={selected.assigned_to ?? ''} onChange={(event) => void updateProtocol({ assigned_to: event.target.value ? Number(event.target.value) : null })} className="block w-full mt-1 rounded-lg border p-2"><option value="">Não atribuído</option>{team.filter((member) => member.active && member.role === 'operator').map((member) => <option key={member.id} value={member.id}>{member.display_name}</option>)}</select></label>}
+            </div>
+            <div><label className="block text-sm font-semibold" htmlFor="treatment-notes">Notas internas de tratativa</label><textarea id="treatment-notes" value={notes} onChange={(event) => setNotes(event.target.value)} maxLength={10000} rows={3} className="w-full mt-1 rounded-lg border p-2" /><button type="button" disabled={busy || notes === selected.treatment_notes} onClick={() => void updateProtocol({ treatment_notes: notes })} className="mt-2 px-4 py-2 rounded-lg bg-[#00685f] text-white text-sm font-semibold disabled:opacity-50">Salvar notas</button></div>
+            {selected.attachments.length > 0 && <div><h3 className="font-semibold text-sm mb-2">Evidências</h3><div className="flex flex-wrap gap-2">{selected.attachments.map((attachment) => <a key={attachment.id} href={`/api/protocols/${selected.id}/attachments/${attachment.id}`} className="text-sm text-[#00685f] underline break-all">{attachment.file_name}</a>)}</div></div>}
+            {selected.treatment_steps?.length ? <details><summary className="font-semibold text-sm cursor-pointer">Histórico de tratativa ({selected.treatment_steps.length})</summary><div className="mt-2 space-y-2">{selected.treatment_steps.map((step, index) => <div key={`${step.created_at}-${index}`} className="border-l-2 border-teal-200 pl-3 text-xs"><strong>{step.status}</strong> · {step.actor_name || 'Equipe'} · {new Date(step.created_at).toLocaleString('pt-BR')}<p>{step.notes}</p></div>)}</div></details> : null}
+            <div className="border-t pt-3"><h3 className="font-semibold text-sm">Mensagens do protocolo</h3><div className="max-h-52 overflow-auto space-y-2 my-2">
+              {messages.map((message, index) => <div key={`${message.created_at}-${index}`} className={`rounded-lg p-3 text-sm ${message.sender_role === 'staff' ? 'bg-[#eff4ff] mr-6' : 'bg-teal-50 ml-6'}`}><p className="whitespace-pre-wrap break-words">{message.message}</p><time className="block text-[10px] text-slate-500 mt-1">{message.sender_role === 'staff' ? 'Equipe' : 'Denunciante'} · {new Date(message.created_at).toLocaleString('pt-BR')}</time></div>)}
+              {!messages.length && <p className="text-xs text-slate-500">Nenhuma mensagem até o momento.</p>}
+            </div><form onSubmit={sendMessage} className="flex gap-2"><input value={reply} onChange={(event) => setReply(event.target.value)} maxLength={2000} placeholder="Mensagem para o denunciante" className="flex-1 min-w-0 rounded-lg border p-2 text-sm" /><button disabled={busy || !reply.trim()} className="px-4 rounded-lg bg-[#00685f] text-white text-sm font-semibold disabled:opacity-50">Enviar</button></form></div>
+          </section> : <div className="bg-white rounded-2xl border border-[#dce9ff] p-8 text-center text-slate-500">{loading ? 'Carregando protocolo…' : 'Selecione um protocolo para ver os detalhes.'}</div>}
+        </div>
+      </main>
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 border-t border-slate-200"><div className="max-w-lg mx-auto flex h-14">{(['inicio', 'relatar', 'protocolos', 'guia'] as const).map((tab) => <button type="button" key={tab} onClick={() => { onSwitchToStudentView(); onNavigateTab(tab); }} className={`flex-1 text-xs font-semibold ${tab === 'protocolos' ? 'text-[#00685f]' : 'text-slate-600'}`}>{tab === 'inicio' ? 'Início' : tab === 'relatar' ? 'Relatar' : tab === 'protocolos' ? 'Protocolos' : 'Guia'}</button>)}</div></nav>
     </div>
   );
 };

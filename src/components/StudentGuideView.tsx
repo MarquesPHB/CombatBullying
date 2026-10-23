@@ -4,19 +4,21 @@ interface StudentGuideViewProps {
   onNavigateTab: (tab: 'inicio' | 'relatar' | 'protocolos' | 'guia') => void;
   onOpenDisguise: () => void;
   onOpenSos: () => void;
+  onOpenStaffView: () => void;
 }
 
 export const StudentGuideView: React.FC<StudentGuideViewProps> = ({
   onNavigateTab,
   onOpenDisguise,
   onOpenSos,
+  onOpenStaffView,
 }) => {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   const faqs = [
     {
       q: 'Minha identidade pode ser descoberta se eu relatar como anônimo?',
-      a: 'Não. O sistema Combatbullying remove automaticamente endereços IP, dados de localização geográfica e metadados EXIF de qualquer imagem ou documento anexado. Nem mesmo a escola terá acesso aos seus dados de conexão.'
+      a: 'Você pode enviar o relato sem informar nome ou contato. O protocolo e o PIN protegem o acesso ao acompanhamento; guarde-os em local seguro. Não inclua no relato informações pessoais que não sejam necessárias.'
     },
     {
       q: 'O que a escola faz depois que envio o relato?',
@@ -52,10 +54,13 @@ export const StudentGuideView: React.FC<StudentGuideViewProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={onOpenDisguise}
-              className="h-8 px-2.5 rounded-full bg-[#dce9ff]/60 hover:bg-[#dce9ff] text-[#3d4947] flex items-center gap-1 active:scale-95 transition-all text-xs font-semibold"
+              aria-label="Abrir calculadora camuflada"
+              className="w-9 h-9 rounded-full bg-[#dce9ff]/60 hover:bg-[#dce9ff] text-[#3d4947] flex items-center justify-center active:scale-95 transition-all"
             >
-              <span className="material-symbols-outlined text-[15px]">calculate</span>
-              <span>Camuflar</span>
+              <span className="material-symbols-outlined text-[19px]">visibility_off</span>
+            </button>
+            <button type="button" onClick={onOpenStaffView} aria-label="Acesso da equipe" className="w-9 h-9 rounded-full bg-[#eff4ff] text-[#00685f]">
+              <span className="material-symbols-outlined">person</span>
             </button>
             <button
               onClick={onOpenSos}
