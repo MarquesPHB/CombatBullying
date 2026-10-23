@@ -39,3 +39,5 @@ conecte-o ao projeto nos ambientes desejados. O Vercel deve disponibilizar a var
 diretamente ao Blob, sem passar pelo limite de requisição da API Python.
 
 As senhas não são armazenadas em texto puro: são protegidas com PBKDF2-HMAC-SHA256 e salt individual. As sessões usam cookie HTTP-only e expiram após 8 horas.
+
+Novas senhas, redefinições e alterações devem ter pelo menos 8 caracteres, 2 caracteres especiais e letras maiúsculas e minúsculas. A API valida essa regra mesmo quando a solicitação não vem da interface.

@@ -88,4 +88,71 @@
     document.querySelector('[data-tab="protocols"]').addEventListener('click', loadProtocols);
     document.getElementById('refresh-protocols').addEventListener('click', loadProtocols);
   </script>
+  <script>
+    (() => {
+      const requirements = 'Mínimo de 8 caracteres, incluindo 2 caracteres especiais, letras maiúsculas e minúsculas.';
+      const meetsPolicy = value =>
+        Array.from(value).length >= 8 &&
+        Array.from(value).filter(character => !/[\p{L}\p{N}\s]/u.test(character)).length >= 2 &&
+        /\p{Lu}/u.test(value) &&
+        /\p{Ll}/u.test(value);
+      const addHint = input => {
+        if (!input) return;
+        input.minLength = 8;
+        const hint = document.createElement('small');
+        hint.className = 'muted';
+        hint.textContent = requirements;
+        input.insertAdjacentElement('afterend', hint);
+      };
+
+      const newUserPassword = document.getElementById('new-password');
+      const ownPassword = document.getElementById('new-own');
+      const confirmPassword = document.getElementById('confirm');
+      addHint(newUserPassword);
+      addHint(ownPassword);
+      if (confirmPassword) confirmPassword.minLength = 8;
+
+      for (const [formId, inputId, messageId] of [
+        ['user-form', 'new-password', 'user-message'],
+        ['password-form', 'new-own', 'password-message'],
+      ]) {
+        const form = document.getElementById(formId);
+        if (!form) continue;
+        form.addEventListener('submit', event => {
+          const password = document.getElementById(inputId).value;
+          const confirmation = formId === 'password-form' ? confirmPassword.value : password;
+          let error = '';
+          if (!meetsPolicy(password)) error = requirements;
+          else if (password !== confirmation) error = 'As novas senhas não coincidem.';
+          if (error) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            msg(messageId, escape(error));
+          }
+        }, true);
+      }
+
+      document.addEventListener('click', async event => {
+        const resetButton = event.target.closest('[data-reset]');
+        if (!resetButton) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        const password = prompt(`Digite a nova senha temporária. ${requirements}`);
+        if (password === null) return;
+        if (!meetsPolicy(password)) {
+          alert(requirements);
+          return;
+        }
+        try {
+          await api('/api/users/' + resetButton.dataset.reset + '/reset-password', {
+            method: 'POST',
+            body: JSON.stringify({ password }),
+          });
+          alert('Senha redefinida. Informe a nova senha ao responsável.');
+        } catch (error) {
+          alert(error.message);
+        }
+      }, true);
+    })();
+  </script>
 </body></html>

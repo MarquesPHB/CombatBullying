@@ -99,6 +99,18 @@ def check_password(password, encoded):
         return False
 
 
+def password_policy_error(password):
+    if len(password) < 8:
+        return "A senha deve ter pelo menos 8 caracteres."
+    if sum(not character.isalnum() and not character.isspace() for character in password) < 2:
+        return "A senha deve conter pelo menos 2 caracteres especiais."
+    if not any(character.isupper() for character in password):
+        return "A senha deve conter pelo menos uma letra maiúscula."
+    if not any(character.islower() for character in password):
+        return "A senha deve conter pelo menos uma letra minúscula."
+    return None
+
+
 def init_database():
     with db() as connection:
         connection.execute(
@@ -368,8 +380,9 @@ def create_user():
     password = str(data.get("password", ""))
     if not username or not display_name:
         return jsonify(error="Preencha nome e usuário."), 400
-    if len(password) < 6:
-        return jsonify(error="A senha deve ter pelo menos 6 caracteres."), 400
+    policy_error = password_policy_error(password)
+    if policy_error:
+        return jsonify(error=policy_error), 400
     try:
         with db() as connection:
             connection.execute(
@@ -389,8 +402,9 @@ def create_user():
 def reset_user_password(user_id):
     data = request.get_json(silent=True) or {}
     password = str(data.get("password", ""))
-    if len(password) < 6:
-        return jsonify(error="A senha deve ter pelo menos 6 caracteres."), 400
+    policy_error = password_policy_error(password)
+    if policy_error:
+        return jsonify(error=policy_error), 400
     with db() as connection:
         updated = connection.execute(
             """
@@ -403,6 +417,30 @@ def reset_user_password(user_id):
     if updated is None:
         return jsonify(error="Usuário não encontrado."), 404
     return jsonify(message="Senha redefinida com sucesso.")
+
+
+@app.post("/api/password")
+@login_required
+def change_password():
+    data = request.get_json(silent=True) or {}
+    current_password = str(data.get("current_password", ""))
+    new_password = str(data.get("new_password", ""))
+    user = current_user()
+    with db() as connection:
+        account = connection.execute(
+            "SELECT password_hash FROM users WHERE id = %s AND active = TRUE",
+            (user["id"],),
+        ).fetchone()
+        if account is None or not check_password(current_password, account["password_hash"]):
+            return jsonify(error="A senha atual está incorreta."), 401
+        policy_error = password_policy_error(new_password)
+        if policy_error:
+            return jsonify(error=policy_error), 400
+        connection.execute(
+            "UPDATE users SET password_hash = %s WHERE id = %s",
+            (hash_password(new_password), user["id"]),
+        )
+    return jsonify(message="Senha alterada com sucesso.")
 
 
 @app.get("/api/team")
