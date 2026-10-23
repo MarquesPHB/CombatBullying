@@ -232,7 +232,9 @@ def init_database():
                     """,
                     (hash_password(INITIAL_ADMIN_PASSWORD), utc_now()),
                 )
-        elif check_password("ademin", admin["password_hash"]) and len(INITIAL_ADMIN_PASSWORD) >= 20:
+        elif len(INITIAL_ADMIN_PASSWORD) >= 20 and not check_password(
+            INITIAL_ADMIN_PASSWORD, admin["password_hash"]
+        ):
             connection.execute(
                 "UPDATE users SET password_hash = %s WHERE id = %s",
                 (hash_password(INITIAL_ADMIN_PASSWORD), admin["id"]),
