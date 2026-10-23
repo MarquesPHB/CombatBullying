@@ -10,8 +10,9 @@ from functools import wraps
 from urllib.parse import urlparse
 
 import psycopg
-from flask import Flask, Response, jsonify, redirect, request, send_from_directory
+from flask import Flask, Response, has_request_context, jsonify, redirect, request, send_from_directory
 from psycopg.rows import dict_row
+from werkzeug.exceptions import HTTPException
 
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -63,13 +64,15 @@ app = Flask(__name__)
 
 @app.errorhandler(Exception)
 def handle_unexpected_error(error):
+    if isinstance(error, HTTPException):
+        return error
     app.logger.exception("Erro inesperado no backend", exc_info=error)
-    return jsonify(error="Não foi possível processar a solicitação. Verifique a configuração do banco de dados no Vercel."), 500
+    return jsonify(error="Não foi possível processar a solicitação. Verifique a configuração do banco de dados."), 500
 
 
 @app.errorhandler(500)
 def handle_internal_error(error):
-    return jsonify(error="Erro interno do servidor. Verifique a configuração do banco de dados no Vercel."), 500
+    return jsonify(error="Erro interno do servidor. Verifique a configuração do banco de dados."), 500
 
 
 def utc_now():
@@ -79,7 +82,42 @@ def utc_now():
 def db():
     if not DATABASE_URL:
         raise RuntimeError("DATABASE_URL não configurada.")
-    return psycopg.connect(DATABASE_URL, row_factory=dict_row)
+    connection = psycopg.connect(DATABASE_URL, row_factory=dict_row)
+    try:
+        connection.execute(
+            """
+            SELECT set_config('app.audit_actor_id', %s, true),
+                   set_config('app.audit_source', %s, true)
+            """,
+            (
+                str(validated_session_user_id() or ""),
+                request.path if has_request_context() else "database",
+            ),
+        )
+    except Exception:
+        connection.close()
+        raise
+    return connection
+
+
+def validated_session_user_id():
+    if not has_request_context() or len(SESSION_SECRET) < 32:
+        return None
+    try:
+        user_id, issued, signature = request.cookies.get(
+            "combatbullyin_session", ""
+        ).split(":", 2)
+        value = f"{user_id}:{issued}"
+        valid = hmac.compare_digest(
+            signature,
+            hmac.new(SESSION_SECRET.encode(), value.encode(), hashlib.sha256).hexdigest(),
+        )
+        user_id = int(user_id)
+        if not valid or int(issued) + SESSION_TTL < int(utc_now().timestamp()):
+            return None
+        return user_id
+    except (ValueError, TypeError):
+        return None
 
 
 def hash_password(password, salt=None):
@@ -111,6 +149,23 @@ def password_policy_error(password):
     return None
 
 
+def normalize_cpf(value):
+    cpf = re.sub(r"[^0-9]", "", str(value or ""))
+    if len(cpf) != 11 or len(set(cpf)) == 1:
+        return None
+
+    for length in (9, 10):
+        total = sum(
+            int(digit) * weight
+            for digit, weight in zip(cpf[:length], range(length + 1, 1, -1))
+        )
+        remainder = total % 11
+        expected = "0" if remainder < 2 else str(11 - remainder)
+        if cpf[length] != expected:
+            return None
+    return cpf
+
+
 def init_database():
     with db() as connection:
         connection.execute(
@@ -119,6 +174,7 @@ def init_database():
                 id BIGSERIAL PRIMARY KEY,
                 username TEXT NOT NULL UNIQUE,
                 display_name TEXT NOT NULL,
+                cpf TEXT,
                 role TEXT NOT NULL DEFAULT 'operator',
                 password_hash TEXT NOT NULL,
                 created_at TIMESTAMPTZ NOT NULL,
@@ -184,10 +240,31 @@ def init_database():
                 message TEXT NOT NULL,
                 created_at TIMESTAMPTZ NOT NULL
             );
+            CREATE TABLE IF NOT EXISTS audit_events (
+                id BIGSERIAL PRIMARY KEY,
+                occurred_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                actor_user_id BIGINT,
+                actor_label TEXT NOT NULL,
+                database_user TEXT NOT NULL,
+                source TEXT NOT NULL,
+                action TEXT NOT NULL,
+                table_name TEXT NOT NULL,
+                record_id TEXT NOT NULL,
+                changed_fields TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[]
+            );
+            CREATE INDEX IF NOT EXISTS audit_events_occurred_at_idx
+                ON audit_events (occurred_at DESC, id DESC);
             """
         )
         connection.execute(
             "ALTER TABLE protocols ADD COLUMN IF NOT EXISTS treatment_notes TEXT NOT NULL DEFAULT ''"
+        )
+        connection.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS cpf TEXT")
+        connection.execute(
+            """
+            CREATE UNIQUE INDEX IF NOT EXISTS users_cpf_unique_idx
+            ON users (cpf) WHERE cpf IS NOT NULL
+            """
         )
         connection.execute("ALTER TABLE protocols ADD COLUMN IF NOT EXISTS pin_hash TEXT")
         connection.execute("ALTER TABLE guide_items ADD COLUMN IF NOT EXISTS details TEXT NOT NULL DEFAULT ''")
@@ -201,6 +278,162 @@ def init_database():
         connection.execute("ALTER TABLE protocol_attachments ADD COLUMN IF NOT EXISTS blob_url TEXT")
         connection.execute(
             "ALTER TABLE protocol_attachments ADD COLUMN IF NOT EXISTS upload_status TEXT NOT NULL DEFAULT 'complete'"
+        )
+        connection.execute(
+            """
+            CREATE OR REPLACE FUNCTION public.capture_audit_event()
+            RETURNS trigger
+            LANGUAGE plpgsql
+            SECURITY DEFINER
+            SET search_path = pg_catalog, public
+            AS $audit$
+            DECLARE
+                old_values JSONB;
+                new_values JSONB;
+                row_values JSONB;
+                row_id TEXT;
+                actor_id BIGINT;
+                actor_name TEXT;
+                source_path TEXT;
+                changed TEXT[];
+            BEGIN
+                IF TG_OP IN ('UPDATE', 'DELETE') THEN
+                    old_values := to_jsonb(OLD);
+                END IF;
+                IF TG_OP IN ('INSERT', 'UPDATE') THEN
+                    new_values := to_jsonb(NEW);
+                END IF;
+                IF TG_OP = 'UPDATE' AND old_values = new_values THEN
+                    RETURN NEW;
+                END IF;
+
+                row_values := COALESCE(new_values, old_values);
+                row_id := COALESCE(row_values->>'protocol_code', row_values->>'id', 'unknown');
+                IF NULLIF(current_setting('app.audit_actor_id', true), '') ~ '^[0-9]+$' THEN
+                    actor_id := current_setting('app.audit_actor_id', true)::BIGINT;
+                    SELECT display_name || ' (@' || username || ')'
+                    INTO actor_name
+                    FROM public.users
+                    WHERE id = actor_id;
+                END IF;
+                source_path := COALESCE(
+                    NULLIF(current_setting('app.audit_source', true), ''),
+                    'database'
+                );
+                SELECT COALESCE(array_agg(field_label ORDER BY field_label), ARRAY[]::TEXT[])
+                INTO changed
+                FROM (
+                    SELECT DISTINCT CASE column_name
+                        WHEN 'password_hash' THEN 'credenciais'
+                        WHEN 'pin_hash' THEN 'PIN'
+                        WHEN 'reporter_name' THEN 'identidade do denunciante'
+                        WHEN 'reporter_email' THEN 'e-mail do denunciante'
+                        WHEN 'reporter_phone' THEN 'telefone do denunciante'
+                        WHEN 'report' THEN 'relato'
+                        WHEN 'treatment_notes' THEN 'notas de tratativa'
+                        WHEN 'notes' THEN 'anotações'
+                        WHEN 'recipient' THEN 'destinatário'
+                        WHEN 'message' THEN 'mensagem'
+                        WHEN 'content' THEN 'conteúdo do anexo'
+                        WHEN 'blob_url' THEN 'localização do anexo'
+                        WHEN 'blob_pathname' THEN 'caminho do anexo'
+                        ELSE column_name
+                    END AS field_label
+                    FROM jsonb_object_keys(row_values) AS fields(column_name)
+                    WHERE column_name NOT IN ('id', 'created_at', 'updated_at')
+                      AND (
+                        TG_OP <> 'UPDATE'
+                        OR (old_values->column_name) IS DISTINCT FROM (new_values->column_name)
+                      )
+                ) AS changed_columns;
+
+                INSERT INTO public.audit_events
+                    (actor_user_id, actor_label, database_user, source, action,
+                     table_name, record_id, changed_fields)
+                VALUES (
+                    actor_id,
+                    COALESCE(actor_name, CASE
+                        WHEN source_path = 'database' THEN session_user
+                        ELSE 'Acesso público'
+                    END),
+                    session_user,
+                    source_path,
+                    lower(TG_OP),
+                    TG_TABLE_NAME,
+                    row_id,
+                    changed
+                );
+
+                IF TG_OP = 'DELETE' THEN
+                    RETURN OLD;
+                END IF;
+                RETURN NEW;
+            END;
+            $audit$
+            """
+        )
+        connection.execute(
+            """
+            DO $audit$
+            DECLARE
+                table_name TEXT;
+                relation_name REGCLASS;
+                trigger_name TEXT;
+            BEGIN
+                FOREACH table_name IN ARRAY ARRAY[
+                    'users', 'protocols', 'protocol_attachments',
+                    'protocol_treatment_steps', 'guide_items', 'protocol_notifications'
+                ] LOOP
+                    relation_name := to_regclass('public.' || table_name);
+                    trigger_name := 'audit_' || table_name || '_changes';
+                    IF relation_name IS NOT NULL AND NOT EXISTS (
+                        SELECT 1 FROM pg_trigger
+                        WHERE tgrelid = relation_name
+                          AND tgname = trigger_name
+                          AND NOT tgisinternal
+                    ) THEN
+                        EXECUTE format(
+                            'CREATE TRIGGER %I AFTER INSERT OR UPDATE OR DELETE ON %s '
+                            'FOR EACH ROW EXECUTE FUNCTION public.capture_audit_event()',
+                            trigger_name,
+                            relation_name
+                        );
+                    END IF;
+                END LOOP;
+            END;
+            $audit$
+            """
+        )
+        connection.execute(
+            """
+            CREATE OR REPLACE FUNCTION public.prevent_audit_event_mutation()
+            RETURNS trigger
+            LANGUAGE plpgsql
+            AS $audit$
+            BEGIN
+                RAISE EXCEPTION 'audit_events is append-only';
+            END;
+            $audit$
+            """
+        )
+        connection.execute(
+            """
+            DO $audit$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_trigger
+                    WHERE tgrelid = 'public.audit_events'::regclass
+                      AND tgname = 'audit_events_append_only'
+                      AND NOT tgisinternal
+                ) THEN
+                    CREATE TRIGGER audit_events_append_only
+                    BEFORE UPDATE OR DELETE OR TRUNCATE ON public.audit_events
+                    FOR EACH STATEMENT
+                    EXECUTE FUNCTION public.prevent_audit_event_mutation();
+                END IF;
+            END;
+            $audit$
+            """
         )
         guide_count = connection.execute("SELECT COUNT(*) AS count FROM guide_items").fetchone()["count"]
         if guide_count == 0:
@@ -262,25 +495,14 @@ def signed_session(user_id):
 
 
 def current_user():
-    if len(SESSION_SECRET) < 32:
+    user_id = validated_session_user_id()
+    if user_id is None:
         return None
-    raw = request.cookies.get("combatbullyin_session", "")
-    try:
-        user_id, issued, signature = raw.split(":", 2)
-        value = f"{user_id}:{issued}"
-        valid = hmac.compare_digest(
-            signature,
-            hmac.new(SESSION_SECRET.encode(), value.encode(), hashlib.sha256).hexdigest(),
-        )
-        if not valid or int(issued) + SESSION_TTL < int(utc_now().timestamp()):
-            return None
-        with db() as connection:
-            return connection.execute(
-                "SELECT id, username, display_name, role FROM users WHERE id = %s AND active = TRUE",
-                (int(user_id),),
-            ).fetchone()
-    except (ValueError, TypeError):
-        return None
+    with db() as connection:
+        return connection.execute(
+            "SELECT id, username, display_name, role FROM users WHERE id = %s AND active = TRUE",
+            (user_id,),
+        ).fetchone()
 
 
 def login_required(handler):
@@ -349,7 +571,12 @@ def login():
     })
     response.set_cookie(
         "combatbullyin_session", signed_session(user["id"]),
-        httponly=True, secure=True, samesite="Strict", max_age=SESSION_TTL,
+        httponly=True,
+        secure=not (
+            os.environ.get("APP_ENV") == "local"
+            and request.remote_addr == "127.0.0.1"
+        ),
+        samesite="Strict", max_age=SESSION_TTL,
     )
     return response
 
@@ -361,12 +588,61 @@ def logout():
     return response
 
 
+@app.get("/api/audit-logs")
+@admin_required
+def audit_logs():
+    try:
+        limit = min(max(int(request.args.get("limit", 50)), 1), 100)
+        before = request.args.get("before")
+        before_id = int(before) if before else None
+    except (TypeError, ValueError):
+        return jsonify(error="O cursor ou o limite da auditoria é inválido."), 400
+    if before_id is not None and before_id < 1:
+        return jsonify(error="O cursor da auditoria é inválido."), 400
+
+    with db() as connection:
+        if before_id is None:
+            rows = connection.execute(
+                """
+                SELECT id, occurred_at, actor_user_id, actor_label, database_user,
+                       source, action, table_name, record_id, changed_fields
+                FROM audit_events
+                ORDER BY id DESC
+                LIMIT %s
+                """,
+                (limit + 1,),
+            ).fetchall()
+        else:
+            rows = connection.execute(
+                """
+                SELECT id, occurred_at, actor_user_id, actor_label, database_user,
+                       source, action, table_name, record_id, changed_fields
+                FROM audit_events
+                WHERE id < %s
+                ORDER BY id DESC
+                LIMIT %s
+                """,
+                (before_id, limit + 1),
+            ).fetchall()
+        total = connection.execute(
+            "SELECT COUNT(*) AS count FROM audit_events"
+        ).fetchone()["count"]
+
+    has_more = len(rows) > limit
+    entries = rows[:limit]
+    return jsonify(
+        entries=entries,
+        total=total,
+        next_cursor=entries[-1]["id"] if has_more and entries else None,
+    )
+
+
 @app.route("/api/users", methods=["GET"])
 @admin_required
 def users():
     with db() as connection:
         rows = connection.execute(
-            "SELECT id, username, display_name, role, created_at, active FROM users ORDER BY username"
+            "SELECT id, username, display_name, cpf, role, created_at, active FROM users ORDER BY username"
         ).fetchall()
     return jsonify(users=rows)
 
@@ -378,8 +654,14 @@ def create_user():
     username = str(data.get("username", "")).strip()
     display_name = str(data.get("display_name", "")).strip()
     password = str(data.get("password", ""))
+    cpf = normalize_cpf(data.get("cpf"))
+    role = str(data.get("role", "operator")).strip()
     if not username or not display_name:
         return jsonify(error="Preencha nome e usuário."), 400
+    if cpf is None:
+        return jsonify(error="Informe um CPF válido."), 400
+    if role not in {"admin", "operator"}:
+        return jsonify(error="Selecione um perfil válido."), 400
     policy_error = password_policy_error(password)
     if policy_error:
         return jsonify(error=policy_error), 400
@@ -387,12 +669,14 @@ def create_user():
         with db() as connection:
             connection.execute(
                 """
-                INSERT INTO users (username, display_name, password_hash, created_at)
-                VALUES (%s, %s, %s, %s)
+                INSERT INTO users (username, display_name, cpf, role, password_hash, created_at)
+                VALUES (%s, %s, %s, %s, %s, %s)
                 """,
-                (username, display_name, hash_password(password), utc_now()),
+                (username, display_name, cpf, role, hash_password(password), utc_now()),
             )
-    except psycopg.errors.UniqueViolation:
+    except psycopg.errors.UniqueViolation as error:
+        if error.diag.constraint_name == "users_cpf_unique_idx":
+            return jsonify(error="Este CPF já está cadastrado."), 409
         return jsonify(error="Este nome de usuário já está em uso."), 409
     return jsonify(message="Usuário criado com sucesso."), 201
 
@@ -609,7 +893,7 @@ def track_protocol():
 @app.post("/api/protocols")
 def create_protocol():
     if not DATABASE_URL:
-        return jsonify(error="O banco de dados ainda não está configurado no Vercel. Defina DATABASE_URL e publique novamente."), 503
+        return jsonify(error="O banco de dados ainda não está configurado. Defina DATABASE_URL e tente novamente."), 503
     data = request.get_json(silent=True) or {}
     required = ("aggression_type", "occurred_date", "occurred_time", "report")
     if any(not str(data.get(field, "")).strip() for field in required):
@@ -1018,3 +1302,10 @@ def responsible():
 @app.get("/responsavel.html")
 def responsible_html():
     return send_from_directory(ROOT, "responsavel.html")
+
+
+@app.get("/<path:asset_path>")
+def static_asset(asset_path):
+    if asset_path.startswith("api/"):
+        return jsonify(error="Rota não encontrada."), 404
+    return send_from_directory(ROOT, asset_path)

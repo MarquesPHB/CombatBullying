@@ -9,12 +9,13 @@
     *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:14px "Plus Jakarta Sans",sans-serif}button,input{font:inherit}button{cursor:pointer;border:0}.hidden{display:none!important}
     .shell{min-height:100vh;display:grid;grid-template-columns:minmax(340px,1fr) minmax(400px,560px);padding-bottom:72px}.hero{padding:clamp(30px,8vw,110px);background:linear-gradient(145deg,#075e59,#0b8b7e);color:white;display:flex;flex-direction:column;justify-content:space-between}.brand{font-weight:800;font-size:19px}.mark{display:inline-grid;place-items:center;width:42px;height:42px;border-radius:14px;background:#b4f1e2;color:var(--dark);margin-right:9px}.hero h1{max-width:500px;font-size:clamp(34px,5vw,64px);line-height:1.03;letter-spacing:-.06em;margin:0 0 22px}.hero p{max-width:430px;color:#d6fff5;font-size:16px;line-height:1.8}.card{align-self:center;width:min(410px,calc(100% - 40px));margin:auto}.eyebrow{color:var(--teal);text-transform:uppercase;letter-spacing:.12em;font-size:11px;font-weight:800}h2{font-size:30px;letter-spacing:-.05em;margin:10px 0 8px}.sub{color:var(--muted);line-height:1.6;margin:0 0 28px}label{color:var(--ink);font-weight:700;font-size:12px;display:block;margin:17px 0 8px}input{width:100%;padding:14px 15px;border:1px solid var(--line);border-radius:12px;outline:0;background:white}input:focus{border-color:var(--teal);box-shadow:0 0 0 4px #d7f3ed}.primary{width:100%;margin-top:24px;padding:14px;border-radius:12px;background:var(--teal);color:white;font-weight:800}.hint,.notice{margin-top:18px;padding:12px 14px;border-radius:12px;background:#f0f7f5;color:var(--muted);font-size:12px;line-height:1.5}.error,.success{margin-top:16px;padding:12px 14px;border-radius:10px;font-size:12px}.error{background:#fff0ef;color:var(--red)}.success{background:#e9f8f1;color:#127050}
     .dashboard{min-height:100vh;padding:clamp(24px,5vw,60px) clamp(20px,5vw,60px) 100px;max-width:1100px;margin:auto}.top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px}.top h1{font-size:38px;letter-spacing:-.06em;margin:8px 0}.status{padding:8px 12px;border-radius:999px;background:var(--mint);color:var(--dark);font-size:11px;font-weight:800}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.panel{background:white;border:1px solid var(--line);border-radius:18px;padding:20px;margin-top:16px}.stat strong{display:block;font-size:28px;margin:8px 0}.muted{color:var(--muted);font-size:12px}.bar{display:flex;justify-content:space-between;align-items:center}.top-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:8px}.logout{display:inline-flex;align-items:center;gap:6px;padding:9px 12px;border-radius:10px;background:#eef5f3;color:var(--teal);font-weight:800;text-decoration:none}.logout:hover{background:var(--mint)}.logout.danger-action{background:#fff0ef;color:var(--red)}.tabs{display:flex;gap:8px;margin-bottom:16px}.tab{padding:10px 14px;border-radius:10px;background:#eef5f3;color:var(--muted);font-weight:700}.tab.active{background:var(--mint);color:var(--dark)}table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:12px 7px;border-bottom:1px solid #edf4f2;font-size:12px}th{color:var(--muted);font-size:10px;text-transform:uppercase}.badge{padding:5px 9px;border-radius:999px;background:var(--mint);color:var(--dark);font-size:10px;font-weight:700}.danger{background:none;color:var(--red);font-weight:700;font-size:11px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}.form-grid .full{grid-column:1/-1}.actions{display:flex;justify-content:flex-end}.actions .primary{width:auto;padding:12px 20px}.material-symbols-outlined{font-size:22px;vertical-align:middle}.bottom-nav{position:fixed;bottom:0;z-index:20;width:100%;height:72px;background:#fffffff2;backdrop-filter:blur(16px);border-top:1px solid #dce9fc;display:flex;justify-content:center}.nav-inner{width:100%;max-width:720px;display:flex;justify-content:space-around}.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--muted);font-size:10px;font-weight:600;text-decoration:none}.nav-item .material-symbols-outlined{font-size:22px}.nav-item:hover,.nav-item.active{color:var(--teal);font-weight:800}
-    @media(max-width:760px){.shell{display:block}.hero{min-height:310px;padding:30px 24px}.hero h1{font-size:38px}.hero p{font-size:13px;line-height:1.5}.card{padding:40px 0}.grid{grid-template-columns:1fr}.top{display:block}.status{display:inline-block;margin-top:12px}.form-grid{display:block}}
+    .audit-table-wrap{overflow-x:auto}.audit-table-wrap table{min-width:760px}#audit-more{margin-top:16px}
+    @media(max-width:760px){.shell{display:block}.hero{min-height:310px;padding:30px 24px}.hero h1{font-size:38px}.hero p{font-size:13px;line-height:1.5}.card{padding:40px 0}.grid{grid-template-columns:1fr}.top{display:block}.status{display:inline-block;margin-top:12px}.form-grid{display:block}.tabs{flex-wrap:wrap}}
   </style>
 </head>
 <body>
   <section id="login" class="shell"><div class="hero"><div class="brand"><span class="mark">◈</span>Combatbullying</div><div><h1>Uma escola mais segura começa pela escuta.</h1><p>Área protegida para equipes que acolhem relatos e acompanham cada ocorrência com responsabilidade.</p></div><small>● Ambiente local protegido · dados armazenados com segurança</small></div><div class="card"><div class="eyebrow">Acesso da equipe</div><h2>Boas-vindas</h2><p class="sub">Entre uma única vez. O sistema abrirá automaticamente a área correspondente ao seu perfil.</p><form id="login-form"><label>Usuário</label><input id="user" autocomplete="username" required><label>Senha</label><input id="password" type="password" autocomplete="current-password" required><button class="primary">Entrar com segurança</button></form><div id="login-message"></div></div></section>
-  <section id="dashboard" class="dashboard hidden"><div class="top"><div><div class="eyebrow">Painel protegido</div><h1>Visão geral</h1><p class="muted">Centro de cuidado da sua escola.</p></div><div class="top-actions"><span class="status">● Sessão segura</span><a class="logout" href="/"><span class="material-symbols-outlined">home</span>Tela inicial</a><a class="logout" href="/responsavel"><span class="material-symbols-outlined">support_agent</span>Área do responsável</a><button class="logout danger-action" id="logout"><span class="material-symbols-outlined">logout</span>Sair</button></div></div><div class="tabs"><button class="tab active" data-tab="overview">Visão geral</button><button class="tab" data-tab="protocols">Protocolos</button><button class="tab" data-tab="guides">Cartilhas e apoio</button><button class="tab" data-tab="users">Usuários</button><button class="tab" data-tab="password">Minha senha</button></div><div id="overview" class="tab-content"><div class="grid"><div class="panel stat"><span class="muted">USUÁRIOS ATIVOS</span><strong id="stat-users">—</strong><span class="muted">pessoas com acesso ao painel</span></div><div class="panel stat"><span class="muted">ACESSO</span><strong>Admin</strong><span class="muted">nível atual</span></div><div class="panel stat"><span class="muted">PROTEÇÃO</span><strong>Ativa</strong><span class="muted">sessão autenticada</span></div></div><div class="panel"><h3>Gestão segura</h3><p class="muted">Use as abas acima para gerenciar acessos e manter sua senha atualizada.</p></div></div>  <div id="protocols" class="tab-content hidden"><div class="panel"><div class="bar"><div><h3>Gestão de protocolos</h3><span class="muted">Receba, encaminhe e acompanhe cada reclamação.</span></div><button class="tab" id="refresh-protocols">Atualizar</button></div><div id="protocol-list"></div></div></div>  <div id="guides" class="tab-content hidden"><div class="panel"><h3>Cartilhas e canais de apoio</h3><p class="muted">Cadastre orientações que aparecerão na guia pública.</p><form id="guide-form" class="form-grid"><div><label>Categoria</label><select id="guide-category"><option>Prevenção</option><option>Direitos</option><option>Canais de apoio</option><option>Cartilhas</option></select></div><div><label>Ícone</label><input id="guide-icon" value="menu_book"></div><div><label>Título</label><input id="guide-title" required></div>  <div class="full"><label>Resumo</label><textarea id="guide-description" required></textarea><label>Conteúdo detalhado</label><textarea id="guide-details" required></textarea><label>Fonte oficial (URL)</label><input id="guide-source" type="url" placeholder="https://..."></div><div class="actions"><button class="primary">Adicionar informação</button></div></form><div id="guide-message"></div></div><div class="panel"><table><thead><tr><th>Categoria</th><th>Informação</th><th></th></tr></thead><tbody id="guide-admin-list"></tbody></table></div></div><div id="users" class="tab-content hidden"><div class="panel"><div class="bar"><h3>Equipe com acesso</h3><span id="count" class="badge">0 usuários</span></div><table><thead><tr><th>Nome</th><th>Usuário</th><th>Perfil</th><th>Entrada</th><th></th></tr></thead><tbody id="users-table"></tbody></table></div><div class="panel"><h3>Criar novo usuário</h3><form id="user-form" class="form-grid"><div><label>Nome completo</label><input id="new-name" required></div><div><label>Nome de usuário</label><input id="new-user" required></div><div><label>Senha inicial</label><input id="new-password" type="password" minlength="6" required></div><div class="actions"><button class="primary">Criar usuário</button></div></form><div id="user-message"></div></div></div><div id="password-tab" class="tab-content hidden"><div class="panel" style="max-width:560px"><h3>Alterar minha senha</h3><p class="muted">Use uma senha pessoal com pelo menos 6 caracteres.</p><form id="password-form"><label>Senha atual</label><input id="current" type="password" required><label>Nova senha</label><input id="new-own" type="password" minlength="6" required><label>Confirmar nova senha</label><input id="confirm" type="password" minlength="6" required><button class="primary">Salvar nova senha</button></form><div id="password-message"></div></div></div></section>
+  <section id="dashboard" class="dashboard hidden"><div class="top"><div><div class="eyebrow">Painel protegido</div><h1>Visão geral</h1><p class="muted">Centro de cuidado da sua escola.</p></div><div class="top-actions"><span class="status">● Sessão segura</span><a class="logout" href="/"><span class="material-symbols-outlined">home</span>Tela inicial</a><a class="logout" href="/responsavel"><span class="material-symbols-outlined">support_agent</span>Área do responsável</a><button class="logout danger-action" id="logout"><span class="material-symbols-outlined">logout</span>Sair</button></div></div><div class="tabs"><button class="tab active" data-tab="overview">Visão geral</button><button class="tab" data-tab="protocols">Protocolos</button><button class="tab" data-tab="guides">Cartilhas e apoio</button><button class="tab" data-tab="users">Usuários</button><button class="tab" data-tab="audit">Auditoria</button><button class="tab" data-tab="password">Minha senha</button></div><div id="overview" class="tab-content"><div class="grid"><div class="panel stat"><span class="muted">USUÁRIOS ATIVOS</span><strong id="stat-users">—</strong><span class="muted">pessoas com acesso ao painel</span></div><div class="panel stat"><span class="muted">ACESSO</span><strong>Admin</strong><span class="muted">nível atual</span></div><div class="panel stat"><span class="muted">PROTEÇÃO</span><strong>Ativa</strong><span class="muted">sessão autenticada</span></div></div><div class="panel"><h3>Gestão segura</h3><p class="muted">Use as abas acima para gerenciar acessos e manter sua senha atualizada.</p></div></div>  <div id="protocols" class="tab-content hidden"><div class="panel"><div class="bar"><div><h3>Gestão de protocolos</h3><span class="muted">Receba, encaminhe e acompanhe cada reclamação.</span></div><button class="tab" id="refresh-protocols">Atualizar</button></div><div id="protocol-list"></div></div></div>  <div id="guides" class="tab-content hidden"><div class="panel"><h3>Cartilhas e canais de apoio</h3><p class="muted">Cadastre orientações que aparecerão na guia pública.</p><form id="guide-form" class="form-grid"><div><label>Categoria</label><select id="guide-category"><option>Prevenção</option><option>Direitos</option><option>Canais de apoio</option><option>Cartilhas</option></select></div><div><label>Ícone</label><input id="guide-icon" value="menu_book"></div><div><label>Título</label><input id="guide-title" required></div>  <div class="full"><label>Resumo</label><textarea id="guide-description" required></textarea><label>Conteúdo detalhado</label><textarea id="guide-details" required></textarea><label>Fonte oficial (URL)</label><input id="guide-source" type="url" placeholder="https://..."></div><div class="actions"><button class="primary">Adicionar informação</button></div></form><div id="guide-message"></div></div><div class="panel"><table><thead><tr><th>Categoria</th><th>Informação</th><th></th></tr></thead><tbody id="guide-admin-list"></tbody></table></div></div><div id="users" class="tab-content hidden"><div class="panel"><div class="bar"><h3>Equipe com acesso</h3><span id="count" class="badge">0 usuários</span></div><table><thead><tr><th>Nome</th><th>Usuário</th><th>Perfil</th><th>Entrada</th><th></th></tr></thead><tbody id="users-table"></tbody></table></div><div class="panel"><h3>Criar novo usuário</h3><form id="user-form" class="form-grid"><div><label>Nome completo</label><input id="new-name" required></div><div><label>Nome de usuário</label><input id="new-user" required></div><div><label>Senha inicial</label><input id="new-password" type="password" minlength="6" required></div><div class="actions"><button class="primary">Criar usuário</button></div></form><div id="user-message"></div></div></div><div id="password-tab" class="tab-content hidden"><div class="panel" style="max-width:560px"><h3>Alterar minha senha</h3><p class="muted">Use uma senha pessoal com pelo menos 6 caracteres.</p><form id="password-form"><label>Senha atual</label><input id="current" type="password" required><label>Nova senha</label><input id="new-own" type="password" minlength="6" required><label>Confirmar nova senha</label><input id="confirm" type="password" minlength="6" required><button class="primary">Salvar nova senha</button></form><div id="password-message"></div></div></div><div id="audit" class="tab-content hidden"><div class="panel"><div class="bar"><div><h3>Registro de auditoria</h3><span id="audit-count" class="muted">Carregando registros...</span></div><button class="tab" id="refresh-audit">Atualizar</button></div><p class="muted">Rastreia inclusões, alterações e exclusões de registros pelo aplicativo e diretamente no banco. Valores de relatos, senhas, PINs e anexos não são copiados para este log. Alterações de código e deploys são consultáveis no histórico do GitHub e Vercel.</p><div class="audit-table-wrap"><table><thead><tr><th>Data e hora</th><th>Responsável</th><th>Ação</th><th>Tabela / registro</th><th>Campos</th><th>Origem</th></tr></thead><tbody id="audit-list"></tbody></table></div><div id="audit-message"></div><button class="tab hidden" id="audit-more">Carregar registros anteriores</button></div></div></section>
   <nav class="bottom-nav"><div class="nav-inner"><a class="nav-item active" href="/"><span class="material-symbols-outlined">shield_with_heart</span>Início</a><a class="nav-item" href="/?screen=report"><span class="material-symbols-outlined">edit_document</span>Relatar</a><a class="nav-item" href="/?screen=protocol"><span class="material-symbols-outlined">verified</span>Protocolos</a><a class="nav-item" href="/?screen=guide"><span class="material-symbols-outlined">menu_book</span>Guia</a></div></nav>
   <style>
     .protocol-card{border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:12px;background:#fbfefd}
@@ -155,6 +156,183 @@
           alert(error.message);
         }
       }, true);
+    })();
+  </script>
+  <script>
+    (() => {
+      const list = document.getElementById('audit-list');
+      const moreButton = document.getElementById('audit-more');
+      let cursor = null;
+      let loadedCount = 0;
+      const actionLabels = { insert: 'Inclusão', update: 'Alteração', delete: 'Exclusão' };
+      const tableLabels = {
+        users: 'Usuários',
+        protocols: 'Protocolos',
+        protocol_attachments: 'Anexos',
+        protocol_treatment_steps: 'Tratativas',
+        protocol_notifications: 'Notificações',
+        guide_items: 'Cartilhas e apoio',
+      };
+
+      function renderEntry(entry) {
+        const actor = entry.actor_label || `Usuário #${entry.actor_user_id || 'desconhecido'}`;
+        const source = entry.source === 'database'
+          ? `Banco de dados (${entry.database_user})`
+          : 'Aplicativo';
+        const fields = Array.isArray(entry.changed_fields) && entry.changed_fields.length
+          ? entry.changed_fields.join(', ')
+          : '—';
+        const recordId = String(entry.record_id);
+        const recordLabel = recordId.startsWith('#') ? recordId : `#${recordId}`;
+        return `<tr>
+          <td>${escape(new Date(entry.occurred_at).toLocaleString('pt-BR'))}</td>
+          <td>${escape(actor)}</td>
+          <td>${escape(actionLabels[entry.action] || entry.action)}</td>
+          <td>${escape(tableLabels[entry.table_name] || entry.table_name)} ${escape(recordLabel)}</td>
+          <td>${escape(fields)}</td>
+          <td>${escape(source)}</td>
+        </tr>`;
+      }
+
+      async function loadAudit(reset = true) {
+        if (reset) {
+          cursor = null;
+          loadedCount = 0;
+          list.replaceChildren();
+          document.getElementById('audit-message').replaceChildren();
+          document.getElementById('audit-count').textContent = 'Carregando registros...';
+        }
+        moreButton.disabled = true;
+        try {
+          const query = new URLSearchParams({ limit: '50' });
+          if (cursor) query.set('before', cursor);
+          const data = await api(`/api/audit-logs?${query}`);
+          list.insertAdjacentHTML('beforeend', data.entries.map(renderEntry).join(''));
+          loadedCount += data.entries.length;
+          if (!data.entries.length && reset) {
+            list.innerHTML = '<tr><td colspan="6">Ainda não há alterações registradas.</td></tr>';
+          }
+          cursor = data.next_cursor;
+          moreButton.classList.toggle('hidden', !cursor);
+          document.getElementById('audit-count').textContent =
+            `${Math.min(loadedCount, data.total)} de ${data.total} registro(s)`;
+        } catch (error) {
+          document.getElementById('audit-count').textContent = 'Não foi possível carregar a auditoria.';
+          document.getElementById('audit-message').innerHTML =
+            `<div class="error">${escape(error.message)}</div>`;
+          moreButton.classList.add('hidden');
+        } finally {
+          moreButton.disabled = false;
+        }
+      }
+
+      document.querySelector('[data-tab="audit"]').addEventListener('click', () => loadAudit());
+      document.getElementById('refresh-audit').addEventListener('click', () => loadAudit());
+      moreButton.addEventListener('click', () => loadAudit(false));
+    })();
+  </script>
+  <script>
+    (() => {
+      const form = document.getElementById('user-form');
+      const actions = form.querySelector('.actions');
+      const cpfField = document.createElement('div');
+      cpfField.innerHTML = '<label for="new-cpf">CPF</label><input id="new-cpf" type="text" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00" maxlength="14" required>';
+      const roleField = document.createElement('div');
+      roleField.innerHTML = '<label for="new-role">Perfil de acesso</label><select id="new-role" required><option value="operator">Operador</option><option value="admin">Administrador</option></select>';
+      form.insertBefore(cpfField, actions);
+      form.insertBefore(roleField, actions);
+
+      const cpfInput = document.getElementById('new-cpf');
+      const roleInput = document.getElementById('new-role');
+      const style = document.createElement('style');
+      style.textContent = '.form-grid select{width:100%;padding:14px 15px;border:1px solid var(--line);border-radius:12px;background:white;color:var(--ink);font:inherit}';
+      document.head.append(style);
+
+      function normalizedCpf(value) {
+        const cpf = value.replace(/\D/g, '');
+        if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return '';
+        for (const length of [9, 10]) {
+          const total = [...cpf.slice(0, length)].reduce(
+            (sum, digit, index) => sum + Number(digit) * (length + 1 - index),
+            0,
+          );
+          const remainder = total % 11;
+          const expected = remainder < 2 ? 0 : 11 - remainder;
+          if (Number(cpf[length]) !== expected) return '';
+        }
+        return cpf;
+      }
+
+      function formatCpf(value) {
+        return value.replace(/\D/g, '').replace(/^(\d{3})(\d)/, '$1.$2')
+          .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+          .replace(/\.(\d{3})(\d{1,2})$/, '.$1-$2');
+      }
+
+      cpfInput.addEventListener('input', () => {
+        cpfInput.value = formatCpf(cpfInput.value).slice(0, 14);
+        cpfInput.setCustomValidity(
+          normalizedCpf(cpfInput.value) ? '' : 'Informe um CPF válido.',
+        );
+      });
+
+      form.addEventListener('submit', async event => {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        const cpf = normalizedCpf(cpfInput.value);
+        if (!cpf) {
+          cpfInput.setCustomValidity('Informe um CPF válido.');
+          cpfInput.reportValidity();
+          return;
+        }
+        try {
+          await api('/api/users', {
+            method: 'POST',
+            body: JSON.stringify({
+              display_name: document.getElementById('new-name').value,
+              username: document.getElementById('new-user').value,
+              password: document.getElementById('new-password').value,
+              cpf,
+              role: roleInput.value,
+            }),
+          });
+          form.reset();
+          msg('user-message', 'Usuário criado com sucesso.', true);
+          await load();
+        } catch (error) {
+          msg('user-message', error.message);
+        }
+      }, true);
+
+      const usersTable = document.querySelector('#users table');
+      const header = usersTable.tHead.rows[0];
+      const cpfHeader = document.createElement('th');
+      cpfHeader.textContent = 'CPF';
+      header.insertBefore(cpfHeader, header.cells[3]);
+
+      const userRows = document.getElementById('users-table');
+      let renderingCpf = false;
+      const observer = new MutationObserver(() => {
+        if (renderingCpf) return;
+        renderingCpf = true;
+        api('/api/users').then(({ users }) => {
+          observer.disconnect();
+          const cpfByUsername = new Map(users.map(user => [user.username, user.cpf]));
+          for (const row of userRows.rows) {
+            if (row.cells.length >= 6) continue;
+            const username = row.cells[1]?.textContent.replace(/^@/, '').trim();
+            const cell = row.insertCell(3);
+            const cpf = cpfByUsername.get(username);
+            cell.textContent = cpf ? formatCpf(cpf) : '—';
+          }
+          observer.observe(userRows, { childList: true });
+        }).catch(error => {
+          msg('user-message', error.message);
+        }).finally(() => {
+          renderingCpf = false;
+        });
+      });
+      observer.observe(userRows, { childList: true });
     })();
   </script>
 </body></html>
