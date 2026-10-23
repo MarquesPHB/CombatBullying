@@ -3,3 +3,5 @@ __pycache__/
 combatbullyin.db
 .env
 .vercel
+.env*
+node_modules/

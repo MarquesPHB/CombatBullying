@@ -1,13 +1,17 @@
 {
   "builds": [
+    { "src": "api/attachments/*.js", "use": "@vercel/node" },
     { "src": "api/index.py", "use": "@vercel/python" },
+    { "src": "attachments.js", "use": "@vercel/static" },
+    { "src": "responsavel-attachments.js", "use": "@vercel/static" },
     { "src": "**/*.html", "use": "@vercel/static" },
-    { "src": "**/*.png", "use": "@vercel/static" },
-    { "src": "**/*.md", "use": "@vercel/static" }
+    { "src": "**/*.png", "use": "@vercel/static" }
   ],
   "routes": [
+    { "src": "/api/attachments/(upload|status|download)", "dest": "/api/attachments/$1.js" },
     { "src": "/api/(.*)", "dest": "/api/index.py" },
     { "src": "/admin", "dest": "/admin.html" },
+    { "src": "/responsavel", "dest": "/responsavel.html" },
     { "handle": "filesystem" }
   ]
 }

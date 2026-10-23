@@ -1,0 +1,6 @@
+.agents
+.deep-copilot
+dist
+node_modules
+.env*
+*.db
