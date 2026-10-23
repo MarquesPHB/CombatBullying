@@ -108,8 +108,10 @@
       const newUserPassword = document.getElementById('new-password');
       const ownPassword = document.getElementById('new-own');
       const confirmPassword = document.getElementById('confirm');
+      const ownPasswordHint = document.querySelector('#password-tab .muted');
       addHint(newUserPassword);
       addHint(ownPassword);
+      if (ownPasswordHint) ownPasswordHint.textContent = requirements;
       if (confirmPassword) confirmPassword.minLength = 8;
 
       for (const [formId, inputId, messageId] of [
