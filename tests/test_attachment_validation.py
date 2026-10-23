@@ -2,7 +2,11 @@ import io
 import zipfile
 import unittest
 
-from api.index import attachment_content_error, attachment_metadata_error
+from api.index import (
+    attachment_content_error,
+    attachment_metadata_error,
+    resolve_assignment_update,
+)
 
 
 class AttachmentValidationTests(unittest.TestCase):
@@ -63,6 +67,46 @@ class AttachmentValidationTests(unittest.TestCase):
                 invalid.getvalue(),
             )
         )
+
+
+class ProtocolAssignmentTests(unittest.TestCase):
+    def test_operator_can_keep_existing_assignment(self):
+        self.assertEqual(
+            resolve_assignment_update({"assigned_to": "12"}, 12, False),
+            (False, None, None),
+        )
+
+    def test_operator_can_keep_unassigned_protocol_unassigned(self):
+        self.assertEqual(
+            resolve_assignment_update({"assigned_to": None}, None, False),
+            (False, None, None),
+        )
+
+    def test_operator_cannot_change_assignment(self):
+        changed, assigned, error = resolve_assignment_update(
+            {"assigned_to": 13}, 12, False
+        )
+        self.assertFalse(changed)
+        self.assertIsNone(assigned)
+        self.assertIn("Somente o administrador", error)
+
+    def test_admin_can_change_or_clear_assignment(self):
+        self.assertEqual(
+            resolve_assignment_update({"assigned_to": "13"}, 12, True),
+            (True, 13, None),
+        )
+        self.assertEqual(
+            resolve_assignment_update({"assigned_to": None}, 12, True),
+            (True, None, None),
+        )
+
+    def test_invalid_assignment_is_rejected(self):
+        changed, assigned, error = resolve_assignment_update(
+            {"assigned_to": "not-an-id"}, 12, True
+        )
+        self.assertFalse(changed)
+        self.assertIsNone(assigned)
+        self.assertEqual(error, "Responsável inválido.")
 
 
 if __name__ == "__main__":

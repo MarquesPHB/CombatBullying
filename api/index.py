@@ -289,6 +289,26 @@ def attachment_content_error(file_name, content_type, content, complete_content=
     return None if valid else "O conteúdo do arquivo não corresponde ao formato informado."
 
 
+def resolve_assignment_update(data, current_assignee, is_admin):
+    if "assigned_to" not in data:
+        return False, None, None
+    requested_assignee = data["assigned_to"]
+    if requested_assignee in (None, ""):
+        requested_assignee = None
+    else:
+        try:
+            requested_assignee = int(requested_assignee)
+        except (TypeError, ValueError):
+            return False, None, "Responsável inválido."
+        if requested_assignee < 1:
+            return False, None, "Responsável inválido."
+    if requested_assignee == current_assignee:
+        return False, None, None
+    if not is_admin:
+        return False, None, "Somente o administrador pode encaminhar protocolos."
+    return True, requested_assignee, None
+
+
 def init_database():
     with db() as connection:
         connection.execute(
@@ -1327,8 +1347,6 @@ def update_protocol(protocol_id):
     status = data.get("status")
     if status is not None and status not in allowed:
         return jsonify(error="Status inválido."), 400
-    assignment_changed = "assigned_to" in data
-    assigned = data.get("assigned_to") if assignment_changed else None
     notes = data.get("treatment_notes")
     user = current_user()
     with db() as connection:
@@ -1337,8 +1355,12 @@ def update_protocol(protocol_id):
         ).fetchone()
         if existing is None:
             return jsonify(error="Protocolo não encontrado."), 404
-        if assignment_changed and user["role"] != "admin":
-            return jsonify(error="Somente o administrador pode encaminhar protocolos."), 403
+        assignment_changed, assigned, assignment_error = resolve_assignment_update(
+            data, existing["assigned_to"], user["role"] == "admin"
+        )
+        if assignment_error:
+            status_code = 403 if user["role"] != "admin" else 400
+            return jsonify(error=assignment_error), status_code
         if user["role"] != "admin" and existing["assigned_to"] != user["id"]:
             return jsonify(error="Você só pode atualizar protocolos encaminhados a você."), 403
         if assignment_changed and assigned is not None:
