@@ -22,6 +22,12 @@
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     "application/rtf", "text/plain", "text/csv", "text/rtf",
   ]);
+  const typeByExtension = {
+    mp4: "video/mp4", m4v: "video/mp4", mov: "video/quicktime",
+    qt: "video/quicktime", mkv: "video/x-matroska", webm: "video/webm",
+    "3gp": "video/3gpp", "3gpp": "video/3gpp", avi: "video/x-msvideo",
+    mpg: "video/mpeg", mpeg: "video/mpeg",
+  };
   let uploaderPromise;
 
   if (!form || !fileInput || !submitButton) return;
@@ -57,13 +63,21 @@
     return data;
   }
 
+  function getContentType(file) {
+    const browserType = file.type.toLowerCase();
+    if (acceptedTypes.has(browserType)) return browserType;
+    const extension = file.name.split(".").pop()?.toLowerCase() || "";
+    return typeByExtension[extension] || browserType;
+  }
+
   function getFileLimit(file) {
-    if (!acceptedTypes.has(file.type)) {
+    const contentType = getContentType(file);
+    if (!acceptedTypes.has(contentType)) {
       throw new Error(`O formato de “${file.name}” não é aceito. Selecione áudio, vídeo, imagem, PDF, Word ou texto.`);
     }
-    if (file.type.startsWith("video/")) return limits.video;
-    if (file.type.startsWith("audio/")) return limits.audio;
-    if (file.type.startsWith("image/")) return limits.image;
+    if (contentType.startsWith("video/")) return limits.video;
+    if (contentType.startsWith("audio/")) return limits.audio;
+    if (contentType.startsWith("image/")) return limits.image;
     return limits.other;
   }
 
@@ -105,7 +119,7 @@
       if (file.size < 1 || file.size > limit) {
         throw new Error(`“${file.name}” excede o limite de ${(limit / 1_000_000).toLocaleString("pt-BR")} MB.`);
       }
-      if (file.type.startsWith("video/")) await videoDuration(file);
+      if (getContentType(file).startsWith("video/")) await videoDuration(file);
     }
   }
 
@@ -147,6 +161,7 @@
     const pathCode = credentials.code.replace(/[^A-Za-z0-9_-]/g, "");
     for (let index = 0; index < files.length; index += 1) {
       const file = files[index];
+      const contentType = getContentType(file);
       const extension = file.name.includes(".")
         ? `.${file.name.split(".").pop().replace(/[^A-Za-z0-9]/g, "").toLowerCase()}`
         : "";
@@ -155,17 +170,25 @@
       try {
         await upload(pathname, file, {
           access: "private",
+          contentType,
+          multipart: file.size > 10_000_000,
+          onUploadProgress: ({ percentage }) => {
+            status.textContent = `Enviando anexo ${index + 1} de ${files.length}: ${file.name} (${Math.round(percentage)}%)`;
+          },
           handleUploadUrl: "/api/attachments/upload",
           clientPayload: JSON.stringify({
             ...credentials,
             file_name: file.name,
-            content_type: file.type,
+            content_type: contentType,
             file_size: file.size,
           }),
         });
       } catch (error) {
         await cancelReservation(credentials, pathname);
-        failed.push(file);
+        failed.push({
+          file,
+          error: error instanceof Error ? error.message : "Falha inesperada no envio.",
+        });
         console.error(`Falha no envio do anexo “${file.name}”.`, error);
       }
     }
@@ -265,7 +288,7 @@
         failedCount = failedFiles.length;
         if (failedFiles.length) {
           uploadStatus.className = "message error";
-          uploadStatus.textContent = `${failedFiles.length} anexo(s) não puderam ser enviados. Você pode tentar novamente.`;
+          uploadStatus.textContent = `${failedFiles.length} anexo(s) não puderam ser enviados: ${failedFiles.map(item => `${item.file.name}: ${item.error}`).join(" | ")}. Você pode tentar novamente.`;
           const retry = document.createElement("button");
           retry.type = "button";
           retry.className = "secondary";
@@ -273,12 +296,12 @@
           retry.addEventListener("click", async () => {
             retry.disabled = true;
             retry.textContent = "Enviando...";
-            const stillFailed = await uploadFiles(failedFiles, credentials, upload, uploadStatus);
+            const stillFailed = await uploadFiles(failedFiles.map(item => item.file), credentials, upload, uploadStatus);
             failedFiles = stillFailed;
             if (stillFailed.length) {
               failedCount = stillFailed.length;
               uploadStatus.className = "message error";
-              uploadStatus.textContent = `${stillFailed.length} anexo(s) ainda não puderam ser enviados.`;
+              uploadStatus.textContent = `${stillFailed.length} anexo(s) ainda não puderam ser enviados: ${stillFailed.map(item => `${item.file.name}: ${item.error}`).join(" | ")}`;
               retry.disabled = false;
               retry.textContent = "Tentar enviar anexos novamente";
             } else {

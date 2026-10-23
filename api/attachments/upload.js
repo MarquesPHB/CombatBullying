@@ -2,9 +2,29 @@ const { del, head } = require("@vercel/blob");
 const { handleUpload } = require("@vercel/blob/client");
 
 function siteOrigin(request) {
+  if (
+    process.env.VERCEL_ENV === "production" &&
+    process.env.VERCEL_PROJECT_PRODUCTION_URL
+  ) {
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  }
+  if (process.env.VERCEL_ENV === "preview" && process.env.VERCEL_BRANCH_URL) {
+    return `https://${process.env.VERCEL_BRANCH_URL}`;
+  }
   if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
   const protocol = request.headers["x-forwarded-proto"] || "http";
   return `${protocol}://${request.headers.host}`;
+}
+
+function responseError(data, status) {
+  if (typeof data?.error === "string" && data.error) return data.error;
+  if (typeof data?.message === "string" && data.message) return data.message;
+  const error = data?.error;
+  const code = typeof error?.code === "string" ? error.code : null;
+  const message = typeof error?.message === "string" ? error.message : null;
+  if (message) return message;
+  if (code) return `A API recusou a solicitação (${code}, HTTP ${status}).`;
+  return `A API recusou a solicitação (HTTP ${status}).`;
 }
 
 async function postToApi(request, path, body, headers = {}) {
@@ -15,9 +35,15 @@ async function postToApi(request, path, body, headers = {}) {
     headers: requestHeaders,
     body: JSON.stringify(body),
   });
-  const data = await response.json();
+  const responseText = await response.text();
+  let data;
+  try {
+    data = responseText ? JSON.parse(responseText) : {};
+  } catch {
+    data = {};
+  }
   if (!response.ok) {
-    throw new Error(data.error || "Não foi possível processar o anexo.");
+    throw new Error(responseError(data, response.status));
   }
   return data;
 }

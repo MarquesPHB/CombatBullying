@@ -2,6 +2,15 @@ const { Readable } = require("node:stream");
 const { get } = require("@vercel/blob");
 
 function siteOrigin(request) {
+  if (
+    process.env.VERCEL_ENV === "production" &&
+    process.env.VERCEL_PROJECT_PRODUCTION_URL
+  ) {
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  }
+  if (process.env.VERCEL_ENV === "preview" && process.env.VERCEL_BRANCH_URL) {
+    return `https://${process.env.VERCEL_BRANCH_URL}`;
+  }
   if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
   const protocol = request.headers["x-forwarded-proto"] || "http";
   return `${protocol}://${request.headers.host}`;
