@@ -5,6 +5,8 @@ import json
 import os
 import re
 import secrets
+import zipfile
+from io import BytesIO
 from datetime import datetime, timezone
 from functools import wraps
 from urllib.parse import urlparse
@@ -59,7 +61,45 @@ ATTACHMENT_LIMITS = {
     "text/csv": 25_000_000,
     "text/rtf": 25_000_000,
 }
+ATTACHMENT_EXTENSIONS = {
+    "video/mp4": {"mp4", "m4v"},
+    "video/webm": {"webm"},
+    "video/quicktime": {"mov", "qt"},
+    "video/x-matroska": {"mkv"},
+    "video/3gpp": {"3gp", "3gpp"},
+    "video/x-msvideo": {"avi"},
+    "video/mpeg": {"mpg", "mpeg"},
+    "audio/mpeg": {"mp3", "mpga"},
+    "audio/mp4": {"m4a", "mp4"},
+    "audio/ogg": {"ogg", "oga"},
+    "audio/wav": {"wav"},
+    "audio/x-wav": {"wav"},
+    "audio/webm": {"webm"},
+    "audio/aac": {"aac"},
+    "audio/flac": {"flac"},
+    "audio/x-m4a": {"m4a"},
+    "audio/3gpp": {"3gp", "3gpp"},
+    "audio/midi": {"mid", "midi"},
+    "audio/x-ms-wma": {"wma"},
+    "image/jpeg": {"jpg", "jpeg", "jfif"},
+    "image/png": {"png"},
+    "image/webp": {"webp"},
+    "image/gif": {"gif"},
+    "image/heic": {"heic", "heics"},
+    "image/heif": {"heif", "heifs"},
+    "image/avif": {"avif", "avifs"},
+    "image/bmp": {"bmp"},
+    "image/tiff": {"tif", "tiff"},
+    "application/pdf": {"pdf"},
+    "application/msword": {"doc"},
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {"docx"},
+    "application/rtf": {"rtf"},
+    "text/plain": {"txt", "log"},
+    "text/csv": {"csv"},
+    "text/rtf": {"rtf"},
+}
 app = Flask(__name__)
+app.config["MAX_CONTENT_LENGTH"] = 25_000_000
 
 
 @app.errorhandler(Exception)
@@ -164,6 +204,89 @@ def normalize_cpf(value):
         if cpf[length] != expected:
             return None
     return cpf
+
+
+def attachment_metadata_error(file_name, content_type):
+    extension = os.path.splitext(file_name)[1].lstrip(".").lower()
+    if content_type not in ATTACHMENT_EXTENSIONS or extension not in ATTACHMENT_EXTENSIONS[content_type]:
+        return "O formato do arquivo não corresponde a um tipo de anexo permitido."
+    return None
+
+
+def attachment_content_error(file_name, content_type, content, complete_content=True):
+    if attachment_metadata_error(file_name, content_type):
+        return "O formato do arquivo não corresponde a um tipo de anexo permitido."
+    data = bytes(content[:8192])
+    extension = os.path.splitext(file_name)[1].lstrip(".").lower()
+    signatures = {
+        "image/jpeg": data.startswith(b"\xff\xd8\xff"),
+        "image/png": data.startswith(b"\x89PNG\r\n\x1a\n"),
+        "image/gif": data.startswith((b"GIF87a", b"GIF89a")),
+        "image/webp": data.startswith(b"RIFF") and data[8:12] == b"WEBP",
+        "image/bmp": data.startswith(b"BM"),
+        "image/tiff": data.startswith((b"II*\x00", b"MM\x00*")),
+        "application/pdf": data.startswith(b"%PDF-"),
+        "application/msword": data.startswith(b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1"),
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+            data.startswith((b"PK\x03\x04", b"PK\x05\x06", b"PK\x07\x08")),
+        "application/rtf": data.lstrip().startswith(b"{\\rtf"),
+        "text/rtf": data.lstrip().startswith(b"{\\rtf"),
+    }
+    if content_type in {"video/mp4", "audio/mp4", "video/quicktime"}:
+        valid = len(data) >= 12 and data[4:8] == b"ftyp"
+        if content_type == "video/quicktime":
+            valid = valid and data[8:12] == b"qt  "
+    elif content_type in {"video/webm", "audio/webm", "video/x-matroska"}:
+        valid = data.startswith(b"\x1a\x45\xdf\xa3")
+    elif content_type == "video/x-msvideo":
+        valid = data.startswith(b"RIFF") and data[8:12] in {b"AVI ", b"AVIX"}
+    elif content_type == "video/mpeg":
+        valid = any(data.startswith(b"\x00\x00\x01" + code) for code in (b"\xba", b"\xb3", b"\xb8"))
+    elif content_type in {"video/3gpp", "audio/3gpp"}:
+        valid = len(data) >= 12 and data[4:8] == b"ftyp" and data[8:12] in {b"3gp4", b"3gp5", b"3gp6", b"3ge6", b"3gg6"}
+    elif content_type in {"audio/wav", "audio/x-wav"}:
+        valid = data.startswith(b"RIFF") and data[8:12] == b"WAVE"
+    elif content_type == "audio/mpeg":
+        valid = data.startswith(b"ID3") or (
+            len(data) >= 2 and data[0] == 0xFF and data[1] & 0xE0 == 0xE0
+        )
+    elif content_type == "audio/ogg":
+        valid = data.startswith(b"OggS")
+    elif content_type == "audio/aac":
+        valid = len(data) >= 2 and data[0] == 0xFF and data[1] & 0xF6 == 0xF0
+    elif content_type == "audio/flac":
+        valid = data.startswith(b"fLaC")
+    elif content_type == "audio/midi":
+        valid = data.startswith(b"MThd")
+    elif content_type == "audio/x-ms-wma":
+        valid = data.startswith(bytes.fromhex("3026b2758e66cf11a6d900aa0062ce6c"))
+    elif content_type in {"image/heic", "image/heif", "image/avif"}:
+        brands = data[8:64]
+        valid = len(data) >= 12 and data[4:8] == b"ftyp"
+        if content_type == "image/avif":
+            valid = valid and any(brand in brands for brand in (b"avif", b"avis"))
+        elif content_type == "image/heic":
+            valid = valid and any(brand in brands for brand in (b"heic", b"heix", b"hevc", b"hevx"))
+        else:
+            valid = valid and any(brand in brands for brand in (b"mif1", b"msf1"))
+    elif content_type in {"text/plain", "text/csv"}:
+        valid = bool(data) and b"\x00" not in data
+        if valid:
+            try:
+                data.decode("utf-8-sig")
+            except UnicodeDecodeError:
+                valid = False
+    else:
+        valid = signatures.get(content_type, False)
+
+    if valid and complete_content and extension == "docx" and len(content) <= 25_000_000:
+        try:
+            with zipfile.ZipFile(BytesIO(content)) as document:
+                names = set(document.namelist())
+                valid = "[Content_Types].xml" in names and "word/document.xml" in names
+        except (OSError, zipfile.BadZipFile):
+            valid = False
+    return None if valid else "O conteúdo do arquivo não corresponde ao formato informado."
 
 
 def init_database():
@@ -924,8 +1047,22 @@ def create_protocol():
             content_type = str(item.get("type", "application/octet-stream"))
         except (KeyError, ValueError, TypeError):
             return jsonify(error="Anexo inválido."), 400
-        if not name or len(content) > 8_000_000:
+        if (
+            not name
+            or len(name) > 255
+            or "/" in name
+            or "\\" in name
+            or any(ord(character) < 32 for character in name)
+        ):
+            return jsonify(error="O nome do arquivo é inválido."), 400
+        if len(content) > 8_000_000:
             return jsonify(error="Cada anexo deve ter no máximo 8 MB."), 400
+        metadata_error = attachment_metadata_error(name, content_type)
+        if metadata_error:
+            return jsonify(error=metadata_error), 415
+        content_error = attachment_content_error(name, content_type, content)
+        if content_error:
+            return jsonify(error=content_error), 415
         total_size += len(content)
         prepared.append((name, content_type, content))
     if total_size > 20_000_000:
@@ -980,6 +1117,9 @@ def reserve_attachment():
         return jsonify(error="Protocolo ou PIN incorreto."), 401
     if file_limit is None:
         return jsonify(error="Este formato de arquivo não é aceito."), 415
+    metadata_error = attachment_metadata_error(file_name, content_type)
+    if metadata_error:
+        return jsonify(error=metadata_error), 415
     if file_size < 1 or file_size > file_limit:
         return jsonify(error=f"Este arquivo excede o limite de {file_limit // 1_000_000} MB para o formato selecionado."), 413
     if (
@@ -1081,6 +1221,12 @@ def complete_attachment_upload():
         file_size = int(data.get("file_size", 0))
     except (TypeError, ValueError):
         file_size = 0
+    try:
+        content_prefix = base64.b64decode(
+            str(data.get("content_prefix", "")), validate=True
+        )
+    except (ValueError, TypeError):
+        content_prefix = b""
     parsed_url = urlparse(blob_url)
     if (
         not attachment_id
@@ -1091,8 +1237,26 @@ def complete_attachment_upload():
         or content_type not in ATTACHMENT_LIMITS
         or file_size < 1
         or file_size > ATTACHMENT_LIMITS[content_type]
+        or not content_prefix
+        or len(str(data.get("content_prefix", ""))) > 12_000
     ):
         return jsonify(error="Os dados de confirmação do anexo são inválidos."), 400
+    metadata_error = attachment_metadata_error(
+        str(data.get("file_name", "")), content_type
+    )
+    if metadata_error:
+        return jsonify(error=metadata_error), 415
+    if (
+        str(data.get("file_name", "")).lower().endswith(".docx")
+        and data.get("docx_valid") is not True
+    ):
+        return jsonify(error="O arquivo não é um documento Word válido."), 415
+    content_error = attachment_content_error(
+        str(data.get("file_name", "")), content_type, content_prefix,
+        complete_content=False,
+    )
+    if content_error:
+        return jsonify(error=content_error), 415
     with db() as connection:
         attachment = connection.execute(
             """
@@ -1258,6 +1422,8 @@ def download_attachment(protocol_id, attachment_id):
     response = Response(bytes(item["content"]), mimetype=item["content_type"])
     safe_name = item["file_name"].replace('"', "").replace("\r", "").replace("\n", "")
     response.headers["Content-Disposition"] = f'attachment; filename="{safe_name}"'
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["Cache-Control"] = "private, no-store"
     return response
 
 
