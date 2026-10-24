@@ -335,4 +335,162 @@
       observer.observe(userRows, { childList: true });
     })();
   </script>
+  <script>
+    (() => {
+      const userRows = document.getElementById('users-table');
+      const dialog = document.createElement('dialog');
+      dialog.className = 'user-edit-dialog';
+      dialog.innerHTML = `
+        <form id="edit-user-form">
+          <h3>Editar usuário</h3>
+          <label for="edit-user-name">Nome completo</label>
+          <input id="edit-user-name" required>
+          <label for="edit-user-username">Nome de usuário</label>
+          <input id="edit-user-username" required autocomplete="username">
+          <label for="edit-user-cpf">CPF</label>
+          <input id="edit-user-cpf" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00" maxlength="14">
+          <label for="edit-user-role">Perfil de acesso</label>
+          <select id="edit-user-role" required>
+            <option value="operator">Operador</option>
+            <option value="admin">Administrador</option>
+          </select>
+          <div id="edit-user-message" role="alert"></div>
+          <div class="user-edit-actions">
+            <button type="button" class="tab" data-close-edit>Cancelar</button>
+            <button type="submit" class="primary">Salvar alterações</button>
+          </div>
+        </form>`;
+      document.body.append(dialog);
+
+      const style = document.createElement('style');
+      style.textContent = `
+        .user-edit-dialog{width:min(480px,calc(100% - 32px));max-height:90vh;overflow:auto;border:1px solid var(--line);border-radius:18px;padding:24px;color:var(--ink)}
+        .user-edit-dialog::backdrop{background:#102b3b80}
+        .user-edit-dialog select{width:100%;padding:14px 15px;border:1px solid var(--line);border-radius:12px;background:white;color:var(--ink);font:inherit}
+        .user-edit-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+        .user-edit-actions .primary{width:auto;margin:0}
+        .user-action{margin-right:8px}
+        .user-edit{background:#eef5f3;color:var(--teal);padding:7px 10px;border-radius:8px;font-weight:700;font-size:11px}
+        @media(max-width:700px){#users .panel{overflow-x:auto}#users table{min-width:680px}}
+      `;
+      document.head.append(style);
+
+      const editForm = document.getElementById('edit-user-form');
+      const cpfInput = document.getElementById('edit-user-cpf');
+      let editingUser = null;
+
+      function normalizedCpf(value) {
+        const cpf = value.replace(/\D/g, '');
+        if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return '';
+        for (const length of [9, 10]) {
+          const total = [...cpf.slice(0, length)].reduce(
+            (sum, digit, index) => sum + Number(digit) * (length + 1 - index),
+            0,
+          );
+          const remainder = total % 11;
+          if (Number(cpf[length]) !== (remainder < 2 ? 0 : 11 - remainder)) return '';
+        }
+        return cpf;
+      }
+
+      function formatCpf(value) {
+        return value.replace(/\D/g, '').replace(/^(\d{3})(\d)/, '$1.$2')
+          .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+          .replace(/\.(\d{3})(\d{1,2})$/, '.$1-$2');
+      }
+
+      cpfInput.addEventListener('input', () => {
+        cpfInput.value = formatCpf(cpfInput.value).slice(0, 14);
+        cpfInput.setCustomValidity(
+          !cpfInput.value || normalizedCpf(cpfInput.value) ? '' : 'Informe um CPF válido.',
+        );
+      });
+
+      userRows.addEventListener('click', async event => {
+        const removeButton = event.target.closest('[data-id]');
+        const editButton = event.target.closest('[data-edit-user]');
+        if (!removeButton && !editButton) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+
+        if (removeButton) {
+          if (!confirm('Remover o acesso deste usuário? O histórico e os protocolos serão preservados.')) return;
+          removeButton.disabled = true;
+          try {
+            const result = await api(`/api/users/${removeButton.dataset.id}`, { method: 'DELETE' });
+            msg('user-message', escape(result.message), true);
+            await load();
+          } catch (error) {
+            msg('user-message', escape(error.message));
+          } finally {
+            removeButton.disabled = false;
+          }
+          return;
+        }
+
+        try {
+          const { users } = await api('/api/users');
+          editingUser = users.find(user => String(user.id) === editButton.dataset.editUser);
+          if (!editingUser) throw new Error('Usuário não encontrado.');
+          document.getElementById('edit-user-name').value = editingUser.display_name;
+          document.getElementById('edit-user-username').value = editingUser.username;
+          cpfInput.value = editingUser.cpf ? formatCpf(editingUser.cpf) : '';
+          cpfInput.setCustomValidity('');
+          document.getElementById('edit-user-role').value = editingUser.role;
+          document.getElementById('edit-user-message').replaceChildren();
+          dialog.showModal();
+        } catch (error) {
+          msg('user-message', escape(error.message));
+        }
+      }, true);
+
+      document.querySelector('[data-close-edit]').addEventListener('click', () => dialog.close());
+      editForm.addEventListener('submit', async event => {
+        event.preventDefault();
+        if (!editingUser) return;
+        const cpf = normalizedCpf(cpfInput.value);
+        if (cpfInput.value && !cpf) {
+          cpfInput.setCustomValidity('Informe um CPF válido.');
+          cpfInput.reportValidity();
+          return;
+        }
+        const payload = {
+          display_name: document.getElementById('edit-user-name').value.trim(),
+          username: document.getElementById('edit-user-username').value.trim(),
+          role: document.getElementById('edit-user-role').value,
+        };
+        if (cpf) payload.cpf = cpf;
+        const submitButton = editForm.querySelector('[type="submit"]');
+        submitButton.disabled = true;
+        try {
+          const result = await api(`/api/users/${editingUser.id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(payload),
+          });
+          dialog.close();
+          msg('user-message', escape(result.message), true);
+          await load();
+        } catch (error) {
+          msg('edit-user-message', escape(error.message));
+        } finally {
+          submitButton.disabled = false;
+        }
+      });
+
+      const observer = new MutationObserver(() => {
+        for (const row of userRows.rows) {
+          const actionCell = row.cells[row.cells.length - 1];
+          const resetButton = actionCell?.querySelector('[data-reset]');
+          if (!resetButton || actionCell.querySelector('[data-edit-user]')) continue;
+          const editButton = document.createElement('button');
+          editButton.type = 'button';
+          editButton.className = 'user-edit user-action';
+          editButton.dataset.editUser = resetButton.dataset.reset;
+          editButton.textContent = 'Editar';
+          actionCell.prepend(editButton);
+        }
+      });
+      observer.observe(userRows, { childList: true });
+    })();
+  </script>
 </body></html>

@@ -785,7 +785,12 @@ def audit_logs():
 def users():
     with db() as connection:
         rows = connection.execute(
-            "SELECT id, username, display_name, cpf, role, created_at, active FROM users ORDER BY username"
+            """
+            SELECT id, username, display_name, cpf, role, created_at, active
+            FROM users
+            WHERE active = TRUE
+            ORDER BY username
+            """
         ).fetchall()
     return jsonify(users=rows)
 
@@ -822,6 +827,91 @@ def create_user():
             return jsonify(error="Este CPF já está cadastrado."), 409
         return jsonify(error="Este nome de usuário já está em uso."), 409
     return jsonify(message="Usuário criado com sucesso."), 201
+
+
+@app.patch("/api/users/<int:user_id>")
+@admin_required
+def update_user(user_id):
+    data = request.get_json(silent=True) or {}
+    username = str(data.get("username", "")).strip()
+    display_name = str(data.get("display_name", "")).strip()
+    role = str(data.get("role", "")).strip()
+    if not username or not display_name:
+        return jsonify(error="Preencha nome e usuário."), 400
+    if role not in {"admin", "operator"}:
+        return jsonify(error="Selecione um perfil válido."), 400
+
+    cpf_provided = "cpf" in data
+    cpf = normalize_cpf(data.get("cpf")) if cpf_provided else None
+    if cpf_provided and cpf is None:
+        return jsonify(error="Informe um CPF válido."), 400
+
+    user = current_user()
+    try:
+        with db() as connection:
+            existing = connection.execute(
+                "SELECT id, role, active FROM users WHERE id = %s FOR UPDATE",
+                (user_id,),
+            ).fetchone()
+            if existing is None or not existing["active"]:
+                return jsonify(error="Usuário não encontrado."), 404
+            if user_id == user["id"] and role != "admin":
+                return jsonify(error="Não é possível remover seu próprio perfil de administrador."), 400
+            if (
+                existing["role"] == "admin"
+                and role != "admin"
+                and connection.execute(
+                    "SELECT COUNT(*) AS count FROM users WHERE role = 'admin' AND active = TRUE"
+                ).fetchone()["count"] <= 1
+            ):
+                return jsonify(error="Mantenha pelo menos um administrador ativo."), 400
+            if cpf_provided:
+                connection.execute(
+                    """
+                    UPDATE users
+                    SET username = %s, display_name = %s, cpf = %s, role = %s
+                    WHERE id = %s
+                    """,
+                    (username, display_name, cpf, role, user_id),
+                )
+            else:
+                connection.execute(
+                    """
+                    UPDATE users
+                    SET username = %s, display_name = %s, role = %s
+                    WHERE id = %s
+                    """,
+                    (username, display_name, role, user_id),
+                )
+    except psycopg.errors.UniqueViolation as error:
+        if error.diag.constraint_name == "users_cpf_unique_idx":
+            return jsonify(error="Este CPF já está cadastrado."), 409
+        return jsonify(error="Este nome de usuário já está em uso."), 409
+    return jsonify(message="Usuário atualizado com sucesso.")
+
+
+@app.delete("/api/users/<int:user_id>")
+@admin_required
+def deactivate_user(user_id):
+    user = current_user()
+    if user_id == user["id"]:
+        return jsonify(error="Não é possível remover o próprio usuário administrador."), 400
+    with db() as connection:
+        target = connection.execute(
+            "SELECT id, role, active FROM users WHERE id = %s FOR UPDATE",
+            (user_id,),
+        ).fetchone()
+        if target is None or not target["active"]:
+            return jsonify(error="Usuário não encontrado ou já removido."), 404
+        if target["role"] == "admin" and connection.execute(
+            "SELECT COUNT(*) AS count FROM users WHERE role = 'admin' AND active = TRUE"
+        ).fetchone()["count"] <= 1:
+            return jsonify(error="Mantenha pelo menos um administrador ativo."), 400
+        connection.execute(
+            "UPDATE users SET active = FALSE WHERE id = %s",
+            (user_id,),
+        )
+    return jsonify(message="Acesso do usuário removido. O histórico foi preservado.")
 
 
 @app.post("/api/users/<int:user_id>/reset-password")
